@@ -162,10 +162,22 @@ export const BookingForm = ({
     }
   }, [professionalServices]);
 
+  const formatWhatsApp = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    if (numbers.length <= 11) {
+      return numbers.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+    }
+    return numbers;
+  };
+
+  const currentWhatsApp = watch("whatsapp");
+
   const onSubmit = async (data: BookingFormData) => {
     const finalServiceId = internalSelectedService || selectedService;
     if (!finalServiceId) {
       toast.error("Por favor, selecione um serviço");
+      const el = document.getElementById('services');
+      el?.scrollIntoView({ behavior: 'smooth' });
       return;
     }
 
@@ -189,7 +201,7 @@ export const BookingForm = ({
       const { error } = await supabase.from("agendamentos").insert({
         nome_cliente: data.nome,
         email: data.email,
-        whatsapp: data.whatsapp,
+        whatsapp: data.whatsapp.replace(/\D/g, ""),
         pet_name: data.petName,
         pet_species: data.petSpecies,
         professional_id: data.professionalId === "any" ? null : data.professionalId,
@@ -219,31 +231,31 @@ export const BookingForm = ({
   };
 
   return (
-    <section className="py-12 md:py-16 bg-card border-t border-border" id="booking">
+    <section className="py-16 md:py-24 bg-white border-t border-slate-100" id="booking">
       <div className="container mx-auto px-4">
-        <div className="max-w-xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-              Complete seu Agendamento
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-4 tracking-tighter">
+              Finalize seu Agendamento
             </h2>
-            <p className="text-muted-foreground">
-              Preencha os dados abaixo para solicitar seu horário
+            <p className="text-slate-500 text-lg">
+              Preencha os dados abaixo e entraremos em contato.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-2">
-              <Label>Selecione o Serviço</Label>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 bg-slate-50/50 p-6 md:p-10 rounded-[3rem] border border-slate-100 shadow-sm">
+            <div className="space-y-3">
+              <Label className="text-sm font-black uppercase tracking-widest text-slate-400">1. Qual serviço seu pet precisa?</Label>
               <Select 
                 onValueChange={(val) => setInternalSelectedService(val)} 
                 value={internalSelectedService}
               >
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Escolha um serviço" />
+                <SelectTrigger className="h-14 rounded-2xl border-slate-200 bg-white shadow-sm text-lg font-medium">
+                  <SelectValue placeholder="Toque para escolher o serviço" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-2xl">
                   {services.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
+                    <SelectItem key={s.id} value={s.id} className="py-3">
                       {s.name} - R$ {s.price}
                     </SelectItem>
                   ))}
@@ -251,181 +263,191 @@ export const BookingForm = ({
               </Select>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nome">Seu Nome</Label>
-                  <Input
-                    id="nome"
-                    placeholder="Seu nome"
-                    {...register("nome")}
-                    className={cn(errors.nome && "border-destructive")}
-                  />
-                  {errors.nome && (
-                    <p className="text-sm text-destructive">{errors.nome.message}</p>
-                  )}
+            <div className="space-y-6">
+                <Label className="text-sm font-black uppercase tracking-widest text-slate-400">2. Seus dados de contato</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <Input
+                            id="nome"
+                            placeholder="Seu nome completo"
+                            {...register("nome")}
+                            className={cn("h-14 rounded-2xl border-slate-200 bg-white transition-all focus:ring-primary", errors.nome && "border-destructive")}
+                        />
+                        {errors.nome && (
+                            <p className="text-xs text-destructive font-bold">{errors.nome.message}</p>
+                        )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Input
+                            id="whatsapp"
+                            placeholder="Seu WhatsApp (00) 00000-0000"
+                            {...register("whatsapp")}
+                            onChange={(e) => {
+                                const masked = formatWhatsApp(e.target.value);
+                                setValue("whatsapp", masked);
+                            }}
+                            className={cn("h-14 rounded-2xl border-slate-200 bg-white transition-all focus:ring-primary", errors.whatsapp && "border-destructive")}
+                        />
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter ml-1">
+                            Enviaremos a confirmação automática pelo WhatsApp
+                        </p>
+                        {errors.whatsapp && (
+                            <p className="text-xs text-destructive font-bold">{errors.whatsapp.message}</p>
+                        )}
+                    </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="whatsapp">Seu WhatsApp</Label>
-                  <Input
-                    id="whatsapp"
-                    placeholder="11999999999"
-                    {...register("whatsapp")}
-                    className={cn(errors.whatsapp && "border-destructive")}
-                  />
-                  {errors.whatsapp && (
-                    <p className="text-sm text-destructive">{errors.whatsapp.message}</p>
-                  )}
-                </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                {...register("email")}
-                className={cn(errors.email && "border-destructive")}
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
-            </div>
-
-            <hr className="border-border my-8" />
-            
-            <div className="flex items-center gap-2 mb-2 text-primary">
-                <PawPrint className="w-5 h-5" />
-                <h3 className="font-bold">Informações do Pet</h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="petName">Nome do Pet</Label>
-                  <Input
-                    id="petName"
-                    placeholder="Ex: Totó"
-                    {...register("petName")}
-                    className={cn(errors.petName && "border-destructive")}
-                  />
-                  {errors.petName && (
-                    <p className="text-sm text-destructive">{errors.petName.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Espécie</Label>
-                  <Select 
-                    onValueChange={(val) => setValue("petSpecies", val)} 
-                    defaultValue="Cachorro"
-                  >
-                    <SelectTrigger className={cn(errors.petSpecies && "border-destructive")}>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Cachorro">Cachorro</SelectItem>
-                      <SelectItem value="Gato">Gato</SelectItem>
-                      <SelectItem value="Outro">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.petSpecies && (
-                    <p className="text-sm text-destructive">{errors.petSpecies.message}</p>
-                  )}
-                </div>
-            </div>
-
-            <hr className="border-border my-8" />
-            
-            <div className="flex items-center gap-2 mb-2 text-primary">
-                <Users className="w-5 h-5" />
-                <h3 className="font-bold">Agendamento</h3>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Selecione o Profissional (Opcional)</Label>
-              <Select 
-                onValueChange={(val) => setValue("professionalId", val)}
-                value={currentProfessionalId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Qualquer profissional" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Qualquer profissional</SelectItem>
-                  {professionals.map((pro) => (
-                    <SelectItem key={pro.id} value={pro.id}>{pro.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Data</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !date && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, "dd/MM/yyyy", { locale: ptBR }) : "Selecione"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      disabled={(date) =>
-                        date < new Date(new Date().setHours(0,0,0,0))
-                      }
-                      initialFocus
-                      locale={ptBR}
+                    <Input
+                        id="email"
+                        type="email"
+                        placeholder="seu@email.com (opcional)"
+                        {...register("email")}
+                        className={cn("h-14 rounded-2xl border-slate-200 bg-white transition-all focus:ring-primary", errors.email && "border-destructive")}
                     />
-                  </PopoverContent>
-                </Popover>
-              </div>
+                </div>
+            </div>
 
-              <div className="space-y-2">
-                 <Label>Horário Disponível</Label>
-                 <TimeSlotPicker 
-                    date={date}
-                    selectedTime={time}
-                    onTimeSelect={setTime}
-                    schedulingRules={schedulingRules}
-                    professionalId={currentProfessionalId === "any" ? undefined : currentProfessionalId}
-                 />
-              </div>
+            <div className="space-y-6">
+                <div className="flex items-center gap-2 mb-2 text-slate-900">
+                    <PawPrint className="w-5 h-5 text-primary" />
+                    <Label className="text-sm font-black uppercase tracking-widest text-slate-400">3. Sobre o Pet</Label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Input
+                        id="petName"
+                        placeholder="Nome do seu Pet"
+                        {...register("petName")}
+                        className={cn("h-14 rounded-2xl border-slate-200 bg-white transition-all focus:ring-primary", errors.petName && "border-destructive")}
+                      />
+                      {errors.petName && (
+                        <p className="text-xs text-destructive font-bold">{errors.petName.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Select 
+                        onValueChange={(val) => setValue("petSpecies", val)} 
+                        defaultValue="Cachorro"
+                      >
+                        <SelectTrigger className={cn("h-14 rounded-2xl border-slate-200 bg-white transition-all focus:ring-primary", errors.petSpecies && "border-destructive")}>
+                          <SelectValue placeholder="Espécie" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl">
+                          <SelectItem value="Cachorro">Cachorro 🐶</SelectItem>
+                          <SelectItem value="Gato">Gato 🐱</SelectItem>
+                          <SelectItem value="Outro">Outro ✨</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.petSpecies && (
+                        <p className="text-xs text-destructive font-bold">{errors.petSpecies.message}</p>
+                      )}
+                    </div>
+                </div>
+            </div>
+
+            <div className="space-y-6">
+                <Label className="text-sm font-black uppercase tracking-widest text-slate-400">4. Quando deseja o atendimento?</Label>
+                
+                {professionals.length > 0 && (
+                    <div className="space-y-2">
+                    <Select 
+                        onValueChange={(val) => setValue("professionalId", val)}
+                        value={currentProfessionalId}
+                    >
+                        <SelectTrigger className="h-14 rounded-2xl border-slate-200 bg-white shadow-sm font-medium">
+                        <SelectValue placeholder="Qualquer profissional" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl">
+                        <SelectItem value="any">Qualquer profissional (mais rápido)</SelectItem>
+                        {professionals.map((pro) => (
+                            <SelectItem key={pro.id} value={pro.id}>{pro.name}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                        variant="outline"
+                        className={cn(
+                            "w-full h-14 justify-start text-left font-medium rounded-2xl border-slate-200 bg-white shadow-sm",
+                            !date && "text-muted-foreground"
+                        )}
+                        >
+                        <CalendarIcon className="mr-2 h-5 w-5 text-primary" />
+                        {date ? format(date, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar Data"}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 rounded-3xl overflow-hidden" align="start">
+                        <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        disabled={(date) =>
+                            date < new Date(new Date().setHours(0,0,0,0))
+                        }
+                        initialFocus
+                        locale={ptBR}
+                        />
+                    </PopoverContent>
+                    </Popover>
+                </div>
+
+                <div className="space-y-2">
+                    <TimeSlotPicker 
+                        date={date}
+                        selectedTime={time}
+                        onTimeSelect={setTime}
+                        schedulingRules={schedulingRules}
+                        professionalId={currentProfessionalId === "any" ? undefined : currentProfessionalId}
+                    />
+                </div>
+                </div>
             </div>
 
             <Button
               type="submit"
-              className="w-full h-14 text-lg font-bold shadow-xl shadow-primary/20 transition-all hover:scale-[1.01]"
+              className="w-full h-16 text-xl font-black rounded-[2rem] shadow-2xl shadow-primary/30 transition-all hover:scale-[1.02] active:scale-95 uppercase tracking-widest"
               disabled={isSubmitting || !date || !time}
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Finalizando...
+                  <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                  Processando...
                 </>
               ) : (
-                "Confirmar Agendamento"
+                "Agendar agora"
               )}
             </Button>
 
-            {!selectedService && (
-              <p className="text-center text-sm text-muted-foreground">
-                Selecione um serviço acima para continuar
+            {!internalSelectedService && (
+              <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest">
+                Selecione um serviço para liberar o botão
               </p>
             )}
           </form>
         </div>
       </div>
+
+      {/* Floating Action Button for Mobile */}
+      {!internalSelectedService && (
+        <a 
+            href="#services"
+            className="md:hidden fixed bottom-6 right-6 left-6 z-40"
+        >
+            <Button className="w-full h-14 rounded-full shadow-2xl shadow-primary/40 font-black uppercase tracking-widest animate-bounce">
+                Ver Serviços & Agendar
+            </Button>
+        </a>
+      )}
     </section>
   );
 };

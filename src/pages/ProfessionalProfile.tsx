@@ -64,6 +64,8 @@ const hexToHsl = (hex: string): string => {
   return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 };
 
+import { TrustSection } from "@/components/TrustSection";
+
 const ProfessionalProfile = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -102,6 +104,7 @@ const ProfessionalProfile = () => {
           primary_color: (profileData as any).primary_color,
           secondary_color: (profileData as any).secondary_color,
           payment_settings: (profileData as any).payment_settings,
+          scheduling_rules: (profileData as any).scheduling_rules,
         };
 
         setProfile(typedProfile);
@@ -152,8 +155,11 @@ const ProfessionalProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Carregando Agenda...</p>
+        </div>
       </div>
     );
   }
@@ -164,36 +170,41 @@ const ProfessionalProfile = () => {
   const primaryHsl = hexToHsl(primaryHex);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: `hsla(${primaryHsl}, 0.03)` }}>
+    <div className="min-h-screen font-outfit" style={{ backgroundColor: `hsla(${primaryHsl}, 0.02)` }}>
        <style>{`
+         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
          :root {
            --primary: ${primaryHsl};
            --ring: ${primaryHsl};
            --background-accent: hsla(${primaryHsl}, 0.05);
          }
-         .text-primary { color: hsl(${primaryHsl}); }
-         .bg-primary { background-color: hsl(${primaryHsl}); }
-         .border-primary { border-color: hsl(${primaryHsl}); }
+         .text-primary { color: hsl(${primaryHsl}) !important; }
+         .bg-primary { background-color: hsl(${primaryHsl}) !important; }
+         .border-primary { border-color: hsl(${primaryHsl}) !important; }
          .bg-primary\\/10 { background-color: hsla(${primaryHsl}, 0.1); }
          .bg-primary\\/20 { background-color: hsla(${primaryHsl}, 0.2); }
          .text-primary-foreground { color: #fff; }
-         .gradient-subtle { background: linear-gradient(to bottom, hsla(${primaryHsl}, 0.05), #ffffff); }
        `}</style>
 
-      <header className="bg-white/70 backdrop-blur-md border-b sticky top-0 z-50" style={{ borderBottomColor: `hsla(${primaryHsl}, 0.1)` }}>
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+      <header className="bg-white/80 backdrop-blur-xl border-b sticky top-0 z-50 transition-all border-slate-100">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
               {profile.logo_url ? (
-                  <img src={profile.logo_url} alt={profile.name} className="w-10 h-10 rounded-full object-cover border-2 border-primary" />
+                  <img src={profile.logo_url} alt={profile.name} className="w-12 h-12 rounded-2xl object-cover border border-slate-100 shadow-sm" />
               ) : (
-                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">
+                  <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white font-black text-xl shadow-lg">
                     {profile.name.charAt(0)}
                   </div>
               )}
-              <h1 className="font-bold text-lg hidden sm:block">{profile.name}</h1>
+              <div className="hidden sm:block">
+                <h1 className="font-black text-slate-900 leading-tight">{profile.name}</h1>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Aberto para Agendamento</p>
+              </div>
             </div>
             <a href="#services">
-                <Button variant="outline" size="sm" className="border-primary/20 hover:bg-primary/5">Nossos Serviços</Button>
+                <Button className="rounded-full px-6 font-black uppercase text-xs tracking-widest h-12 shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
+                   Quero Agendar
+                </Button>
             </a>
         </div>
       </header>
@@ -201,32 +212,53 @@ const ProfessionalProfile = () => {
       {showSuccess ? (
         <BookingSuccess onNewBooking={handleNewBooking} />
       ) : (
-        <>
+        <main className="animate-in fade-in duration-1000">
           <HeroSection 
             shopName={profile.name} 
             backgroundUrl={profile.hero_bg_url} 
           />
+          
+          <TrustSection />
+
           <ServicesSection
             services={services}
             selectedService={selectedService}
             onSelectService={setSelectedService}
           />
+
           <BookingForm
             profileId={profile.id}
             services={services}
             selectedService={selectedService}
             onSuccess={handleBookingSuccess}
-            schedulingRules={(profile as any).scheduling_rules}
+            schedulingRules={profile.scheduling_rules}
             paymentSettings={profile.payment_settings}
           />
-        </>
+        </main>
       )}
 
-      <footer className="py-12 bg-card text-center text-sm text-muted-foreground border-t border-border mt-12">
+      <footer className="py-20 bg-slate-900 text-white border-t border-slate-800">
         <div className="container mx-auto px-4">
-            <p className="font-bold text-foreground mb-4">{profile.name}</p>
-            <p>© 2025 Todos os direitos reservados.</p>
-            <p className="text-xs mt-4">Plataforma desenvolvida por <span className="font-bold text-primary">PetAgendaGo</span></p>
+            <div className="flex flex-col md:flex-row justify-between items-center gap-12 max-w-6xl mx-auto">
+                <div className="text-center md:text-left">
+                    <div className="flex items-center justify-center md:justify-start gap-4 mb-6">
+                         {profile.logo_url && <img src={profile.logo_url} className="w-12 h-12 rounded-2xl opacity-80" alt="" />}
+                         <p className="font-black text-2xl tracking-tighter">{profile.name}</p>
+                    </div>
+                    <p className="text-slate-400 max-w-sm font-medium">Excelência em estética animal. Seu pet em boas mãos, com agendamento fácil e rápido.</p>
+                </div>
+
+                <div className="flex flex-col items-center md:items-end gap-4">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Desenvolvido por</p>
+                    <div className="flex items-center gap-2 bg-white/5 px-6 py-4 rounded-[2rem] border border-white/5">
+                        <span className="font-black text-xl tracking-tighter">AgendaPet<span className="text-primary italic text-2xl">Go</span></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="mt-20 pt-8 border-t border-white/5 text-center">
+                <p className="text-slate-500 text-sm font-medium">© 2025 {profile.name}. Todos os direitos reservados.</p>
+            </div>
         </div>
       </footer>
     </div>
