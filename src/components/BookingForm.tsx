@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, PawPrint, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { services } from "./ServicesSection";
+import { TimeSlotPicker } from "./TimeSlotPicker";
 
 const bookingSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(100),
@@ -34,40 +34,70 @@ const bookingSchema = z.object({
     .min(10, "WhatsApp deve ter pelo menos 10 dígitos")
     .max(15)
     .regex(/^[0-9]+$/, "Apenas números"),
+  petName: z.string().min(1, "Nome do pet é obrigatório").max(100),
+  petSpecies: z.string().min(1, "Selecione a espécie").max(50),
+  professionalId: z.string().optional(),
 });
 
 type BookingFormData = z.infer<typeof bookingSchema>;
 
-const timeSlots = [
-  "09:00",
-  "10:00",
-  "11:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-  "18:00",
-];
+interface Service {
+  id: string;
+  name: string;
+  price: string | number;
+}
+
+interface Professional {
+  id: string;
+  name: string;
+}
 
 interface BookingFormProps {
   selectedService: string;
   onSuccess: () => void;
+  services: Service[];
+  profileId?: string;
 }
 
-export const BookingForm = ({ selectedService, onSuccess }: BookingFormProps) => {
+export const BookingForm = ({ selectedService, onSuccess, services, profileId }: BookingFormProps) => {
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
 
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<BookingFormData>({
     resolver: zodResolver(bookingSchema),
+    defaultValues: {
+        petSpecies: "Cachorro"
+    }
   });
 
+  const petSpecies = watch("petSpecies");
   const selectedServiceData = services.find((s) => s.id === selectedService);
+
+  useEffect(() => {
+    if (profileId) {
+      fetchProfessionals();
+    }
+  }, [profileId]);
+
+  const fetchProfessionals = async () => {
+    const { data, error } = await supabase
+      .from("professionals")
+      .select("id, name")
+      .eq("profile_id", profileId)
+      .eq("is_active", true);
+
+    if (!error && data) {
+      setProfessionals(data);
+    }
+  };
 
   const onSubmit = async (data: BookingFormData) => {
     if (!selectedService) {
@@ -96,18 +126,28 @@ export const BookingForm = ({ selectedService, onSuccess }: BookingFormProps) =>
         nome_cliente: data.nome,
         email: data.email,
         whatsapp: data.whatsapp,
+        pet_name: data.petName,
+        pet_species: data.petSpecies,
+        professional_id: data.professionalId || null,
         servico: selectedServiceData?.name || selectedService,
+        service_id: selectedServiceData?.id,
+        profile_id: profileId,
         data_hora: dateTime.toISOString(),
         status: "pendente",
       });
 
-      if (error) throw error;
+      if (error) {
+          if (error.message.includes("já possui um agendamento")) {
+              throw new Error("Este horário já foi preenchido por outro cliente. Por favor, escolha outro horário ou profissional.");
+          }
+          throw error;
+      }
 
       toast.success("Agendamento solicitado com sucesso!");
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating booking:", error);
-      toast.error("Erro ao criar agendamento. Tente novamente.");
+      toast.error(error.message || "Erro ao criar agendamento. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -136,21 +176,34 @@ export const BookingForm = ({ selectedService, onSuccess }: BookingFormProps) =>
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Nome */}
-            <div className="space-y-2">
-              <Label htmlFor="nome">Nome completo</Label>
-              <Input
-                id="nome"
-                placeholder="Seu nome"
-                {...register("nome")}
-                className={cn(errors.nome && "border-destructive")}
-              />
-              {errors.nome && (
-                <p className="text-sm text-destructive">{errors.nome.message}</p>
-              )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nome">Seu Nome</Label>
+                  <Input
+                    id="nome"
+                    placeholder="Seu nome"
+                    {...register("nome")}
+                    className={cn(errors.nome && "border-destructive")}
+                  />
+                  {errors.nome && (
+                    <p className="text-sm text-destructive">{errors.nome.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp">Seu WhatsApp</Label>
+                  <Input
+                    id="whatsapp"
+                    placeholder="11999999999"
+                    {...register("whatsapp")}
+                    className={cn(errors.whatsapp && "border-destructive")}
+                  />
+                  {errors.whatsapp && (
+                    <p className="text-sm text-destructive">{errors.whatsapp.message}</p>
+                  )}
+                </div>
             </div>
 
-            {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
               <Input
@@ -165,21 +218,72 @@ export const BookingForm = ({ selectedService, onSuccess }: BookingFormProps) =>
               )}
             </div>
 
-            {/* WhatsApp */}
-            <div className="space-y-2">
-              <Label htmlFor="whatsapp">WhatsApp</Label>
-              <Input
-                id="whatsapp"
-                placeholder="11999999999"
-                {...register("whatsapp")}
-                className={cn(errors.whatsapp && "border-destructive")}
-              />
-              {errors.whatsapp && (
-                <p className="text-sm text-destructive">{errors.whatsapp.message}</p>
-              )}
+            <hr className="border-border my-8" />
+            
+            <div className="flex items-center gap-2 mb-2 text-primary">
+                <PawPrint className="w-5 h-5" />
+                <h3 className="font-bold">Informações do Pet</h3>
             </div>
 
-            {/* Date and Time */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="petName">Nome do Pet</Label>
+                  <Input
+                    id="petName"
+                    placeholder="Ex: Totó"
+                    {...register("petName")}
+                    className={cn(errors.petName && "border-destructive")}
+                  />
+                  {errors.petName && (
+                    <p className="text-sm text-destructive">{errors.petName.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Espécie</Label>
+                  <Select 
+                    onValueChange={(val) => setValue("petSpecies", val)} 
+                    defaultValue="Cachorro"
+                  >
+                    <SelectTrigger className={cn(errors.petSpecies && "border-destructive")}>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Cachorro">Cachorro</SelectItem>
+                      <SelectItem value="Gato">Gato</SelectItem>
+                      <SelectItem value="Outro">Outro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.petSpecies && (
+                    <p className="text-sm text-destructive">{errors.petSpecies.message}</p>
+                  )}
+                </div>
+            </div>
+
+            <hr className="border-border my-8" />
+            
+            <div className="flex items-center gap-2 mb-2 text-primary">
+                <Users className="w-5 h-5" />
+                <h3 className="font-bold">Agendamento</h3>
+            </div>
+
+            {professionals.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Selecione o Profissional (Opcional)</Label>
+                  <Select onValueChange={(val) => setValue("professionalId", val)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Qualquer profissional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="null">Qualquer profissional</SelectItem>
+                      {professionals.map((pro) => (
+                        <SelectItem key={pro.id} value={pro.id}>{pro.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Data</Label>
@@ -202,7 +306,7 @@ export const BookingForm = ({ selectedService, onSuccess }: BookingFormProps) =>
                       selected={date}
                       onSelect={setDate}
                       disabled={(date) =>
-                        date < new Date() || date.getDay() === 0
+                        date < new Date(new Date().setHours(0,0,0,0))
                       }
                       initialFocus
                       locale={ptBR}
@@ -212,19 +316,12 @@ export const BookingForm = ({ selectedService, onSuccess }: BookingFormProps) =>
               </div>
 
               <div className="space-y-2">
-                <Label>Horário</Label>
-                <Select value={time} onValueChange={setTime}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timeSlots.map((slot) => (
-                      <SelectItem key={slot} value={slot}>
-                        {slot}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                 <Label>Horário Disponível</Label>
+                 <TimeSlotPicker 
+                    date={date}
+                    selectedTime={time}
+                    onTimeSelect={setTime}
+                 />
               </div>
             </div>
 
@@ -239,7 +336,7 @@ export const BookingForm = ({ selectedService, onSuccess }: BookingFormProps) =>
                   Enviando...
                 </>
               ) : (
-                "Solicitar Agendamento"
+                "Confirmar Agendamento"
               )}
             </Button>
 
@@ -254,3 +351,4 @@ export const BookingForm = ({ selectedService, onSuccess }: BookingFormProps) =>
     </section>
   );
 };
+
