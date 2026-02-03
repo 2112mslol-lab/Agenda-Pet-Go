@@ -301,12 +301,9 @@ const Index = () => {
       <footer className="py-20 bg-slate-900 text-white">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-10 mb-20">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-                <PawPrint className="text-white w-6 h-6" />
-              </div>
-              <span className="font-black text-2xl tracking-tighter">AgendaPetGo</span>
-            </div>
+            <Link to="/" className="flex items-center gap-3">
+              <img src="/logo.png" alt="AgendaPetGo" className="h-10 w-auto object-contain brightness-0 invert" />
+            </Link>
             <div className="flex gap-12 text-slate-400 font-bold text-xs uppercase tracking-widest">
               <a href="#" className="hover:text-white transition-colors">Privacidade</a>
               <a href="#" className="hover:text-white transition-colors">Termos</a>

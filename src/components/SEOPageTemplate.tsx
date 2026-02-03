@@ -81,8 +81,13 @@ export const SEOPageTemplate = ({ title, description, h1, intro, benefits, ctaTe
         </section>
       </main>
 
-      <footer className="py-12 border-t border-slate-100 text-center">
-        <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">© 2026 AgendaPetGo</p>
+      <footer className="py-16 border-t border-slate-100 bg-slate-50">
+        <div className="container mx-auto px-4 flex flex-col items-center">
+            <Link to="/" className="mb-8">
+                <img src="/logo.png" alt="AgendaPetGo" className="h-8 w-auto object-contain opacity-50 contrast-125 grayscale hover:grayscale-0 hover:opacity-100 transition-all" />
+            </Link>
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">© 2026 AgendaPetGo — Organização Profissional para Pet Shops</p>
+        </div>
       </footer>
     </div>
   );
