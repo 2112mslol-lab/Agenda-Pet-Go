@@ -28,6 +28,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfessionalManager } from "@/components/ProfessionalManager";
 import { BusinessHoursManager } from "@/components/BusinessHoursManager";
 import { ServiceManager } from "@/components/ServiceManager";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type AppointmentStatus = "pendente" | "confirmado" | "recusado";
 
