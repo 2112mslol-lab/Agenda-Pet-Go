@@ -28,9 +28,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfessionalManager } from "@/components/ProfessionalManager";
 import { BusinessHoursManager } from "@/components/BusinessHoursManager";
 import { ServiceManager } from "@/components/ServiceManager";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 type AppointmentStatus = "pendente" | "confirmado" | "recusado";
 
@@ -75,6 +76,23 @@ const Dashboard = () => {
   const [showSetup, setShowSetup] = useState(false);
   const [shopName, setShopName] = useState("");
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  
+  const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
+  const [settings, setSettings] = useState({
+    logo_url: "",
+    hero_bg_url: "",
+    primary_color: "#10b981",
+    secondary_color: "#f59e0b",
+    scheduling_rules: {
+      min_advance_hours: 2,
+      max_days_advance: 30,
+    },
+    notification_settings: {
+      new_appointment_alert: true,
+      client_reminder_4h: true,
+      client_reminder_day_before: true,
+    }
+  });
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -97,6 +115,14 @@ const Dashboard = () => {
          setShowSetup(true);
       } else {
          setProfile(profileBody);
+         setSettings({
+            logo_url: profileBody.logo_url || "",
+            hero_bg_url: profileBody.hero_bg_url || "",
+            primary_color: profileBody.primary_color || "#10b981",
+            secondary_color: profileBody.secondary_color || "#f59e0b",
+            scheduling_rules: profileBody.scheduling_rules || { min_advance_hours: 2, max_days_advance: 30 },
+            notification_settings: profileBody.notification_settings || { new_appointment_alert: true, client_reminder_4h: true, client_reminder_day_before: true },
+         });
          fetchAppointments(session.user.id);
       }
     };
@@ -131,24 +157,33 @@ const Dashboard = () => {
     }
   };
 
+  const handleUpdateSettings = async () => {
+    setIsUpdatingSettings(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          logo_url: settings.logo_url,
+          hero_bg_url: settings.hero_bg_url,
+          primary_color: settings.primary_color,
+          secondary_color: settings.secondary_color,
+          scheduling_rules: settings.scheduling_rules,
+          notification_settings: settings.notification_settings,
+        })
+        .eq("id", userId);
+
+      if (error) throw error;
+      toast.success("Configurações salvas com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao salvar configurações");
+    } finally {
+      setIsUpdatingSettings(false);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/login");
-  };
-
-  const addToGoogleCalendar = (appointment: Appointment) => {
-    const startTime = new Date(appointment.data_hora);
-    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); 
-    
-    const formatDate = (date: Date) => date.toISOString().replace(/-|:|\.\d\d\d/g, "");
-    
-    const url = new URL("https://calendar.google.com/calendar/render");
-    url.searchParams.append("action", "TEMPLATE");
-    url.searchParams.append("text", `Agendamento: ${appointment.servico} - ${appointment.nome_cliente}`);
-    url.searchParams.append("dates", `${formatDate(startTime)}/${formatDate(endTime)}`);
-    url.searchParams.append("details", `Cliente: ${appointment.nome_cliente}\nWhatsapp: ${appointment.whatsapp}\nPet: ${appointment.pet_name || 'N/A'}`);
-    
-    window.open(url.toString(), "_blank");
   };
 
   const fetchAppointments = async (currentUserId: string = userId!) => {
@@ -300,7 +335,7 @@ const Dashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="config" className="gap-2">
               <Settings className="w-4 h-4" />
-              <span className="hidden lg:inline">Gestão</span>
+              <span className="hidden lg:inline">Configurações</span>
             </TabsTrigger>
           </TabsList>
 
@@ -321,7 +356,7 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="grid gap-4">
-                {appointments.map((appointment, index) => {
+                {appointments.map((appointment) => {
                   const config = statusConfig[appointment.status];
                   const isUpdating = updatingId === appointment.id;
                   const isPending = appointment.status === "pendente";
@@ -431,13 +466,151 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="config">
-             <div className="p-8 border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-center">
-                 <Settings className="w-12 h-12 text-muted-foreground/30 mb-4" />
-                 <h3 className="font-semibold text-lg">Configurações Gerais</h3>
-                 <p className="text-muted-foreground max-w-md mx-auto">
-                     Em breve: Gestão de categorias de serviços, edições do perfil visível e planos.
-                 </p>
-             </div>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Identidade Visual</CardTitle>
+                    <CardDescription>Personalize as cores e imagens do seu pet shop</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                        <Label>Cor Primária</Label>
+                        <div className="flex gap-2">
+                          <Input 
+                            type="color" 
+                            className="w-12 h-10 p-1 cursor-pointer border-none" 
+                            value={settings.primary_color}
+                            onChange={(e) => setSettings({...settings, primary_color: e.target.value})}
+                          />
+                          <Input 
+                            value={settings.primary_color}
+                            onChange={(e) => setSettings({...settings, primary_color: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Cor Secundária</Label>
+                        <div className="flex gap-2">
+                          <Input 
+                            type="color" 
+                            className="w-12 h-10 p-1 cursor-pointer border-none" 
+                            value={settings.secondary_color}
+                            onChange={(e) => setSettings({...settings, secondary_color: e.target.value})}
+                          />
+                          <Input 
+                            value={settings.secondary_color}
+                            onChange={(e) => setSettings({...settings, secondary_color: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>URL da Logo (PNG transparente ideal)</Label>
+                      <Input 
+                        placeholder="https://exemplo.com/logo.png" 
+                        value={settings.logo_url}
+                        onChange={(e) => setSettings({...settings, logo_url: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>URL do Plano de Fundo (Página Inicial)</Label>
+                      <Input 
+                        placeholder="https://exemplo.com/hero-bg.jpg" 
+                        value={settings.hero_bg_url}
+                        onChange={(e) => setSettings({...settings, hero_bg_url: e.target.value})}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Regras de Agendamento</CardTitle>
+                    <CardDescription>Defina como os clientes podem agendar</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Aviso antecipado mínimo (Horas)</Label>
+                      <Input 
+                        type="number" 
+                        value={settings.scheduling_rules.min_advance_hours}
+                        onChange={(e) => setSettings({
+                          ...settings, 
+                          scheduling_rules: { ...settings.scheduling_rules, min_advance_hours: Number(e.target.value) }
+                        })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Agendar com até (Dias de antecedência)</Label>
+                      <Input 
+                        type="number" 
+                        value={settings.scheduling_rules.max_days_advance}
+                        onChange={(e) => setSettings({
+                          ...settings, 
+                          scheduling_rules: { ...settings.scheduling_rules, max_days_advance: Number(e.target.value) }
+                        })}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Notificações e Alertas</CardTitle>
+                    <CardDescription>Configure os avisos automáticos</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="flex items-center justify-between p-4 border rounded-xl">
+                      <div className="space-y-0.5">
+                        <Label>Novo Agendamento</Label>
+                        <p className="text-xs text-muted-foreground">Alerta no painel</p>
+                      </div>
+                      <Switch 
+                        checked={settings.notification_settings.new_appointment_alert}
+                        onCheckedChange={(val) => setSettings({
+                          ...settings,
+                          notification_settings: { ...settings.notification_settings, new_appointment_alert: val }
+                        })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between p-4 border rounded-xl">
+                      <div className="space-y-0.5">
+                        <Label>Lembrete 4h antes</Label>
+                        <p className="text-xs text-muted-foreground">Aviso ao cliente</p>
+                      </div>
+                      <Switch 
+                        checked={settings.notification_settings.client_reminder_4h}
+                        onCheckedChange={(val) => setSettings({
+                          ...settings,
+                          notification_settings: { ...settings.notification_settings, client_reminder_4h: val }
+                        })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between p-4 border rounded-xl">
+                      <div className="space-y-0.5">
+                        <Label>Aviso Dia Anterior</Label>
+                        <p className="text-xs text-muted-foreground">Para horários cedo</p>
+                      </div>
+                      <Switch 
+                        checked={settings.notification_settings.client_reminder_day_before}
+                        onCheckedChange={(val) => setSettings({
+                          ...settings,
+                          notification_settings: { ...settings.notification_settings, client_reminder_day_before: val }
+                        })}
+                      />
+                    </div>
+                  </CardContent>
+                  <CardFooter className="bg-muted/30 p-4 rounded-b-xl flex justify-end">
+                    <Button onClick={handleUpdateSettings} disabled={isUpdatingSettings} className="gap-2 font-bold px-8 h-11">
+                      {isUpdatingSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                      Salvar Configurações
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
         )}

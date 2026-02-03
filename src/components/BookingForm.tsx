@@ -57,9 +57,19 @@ interface BookingFormProps {
   onSuccess: () => void;
   services: Service[];
   profileId?: string;
+  schedulingRules?: {
+    min_advance_hours: number;
+    max_days_advance: number;
+  };
 }
 
-export const BookingForm = ({ selectedService, onSuccess, services, profileId }: BookingFormProps) => {
+export const BookingForm = ({ 
+  selectedService, 
+  onSuccess, 
+  services, 
+  profileId,
+  schedulingRules 
+}: BookingFormProps) => {
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -170,7 +180,7 @@ export const BookingForm = ({ selectedService, onSuccess, services, profileId }:
             <div className="mb-6 p-4 rounded-lg bg-accent border border-primary/20 animate-scale-in">
               <p className="text-sm text-muted-foreground mb-1">Serviço selecionado:</p>
               <p className="font-semibold text-foreground">
-                {selectedServiceData.name} - {selectedServiceData.price}
+                {selectedServiceData.name} - R$ {selectedServiceData.price}
               </p>
             </div>
           )}
@@ -321,6 +331,7 @@ export const BookingForm = ({ selectedService, onSuccess, services, profileId }:
                     date={date}
                     selectedTime={time}
                     onTimeSelect={setTime}
+                    schedulingRules={schedulingRules}
                  />
               </div>
             </div>

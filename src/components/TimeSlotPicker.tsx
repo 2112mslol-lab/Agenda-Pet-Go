@@ -14,6 +14,11 @@ interface TimeSlotPickerProps {
   date: Date | undefined;
   selectedTime: string;
   onTimeSelect: (time: string) => void;
+  schedulingRules?: {
+    min_advance_hours: number;
+    max_days_advance: number;
+    lock_day_before?: boolean;
+  };
 }
 
 interface BookedSlot {
@@ -44,6 +49,7 @@ export const TimeSlotPicker = ({
   date,
   selectedTime,
   onTimeSelect,
+  schedulingRules = { min_advance_hours: 2, max_days_advance: 30 }
 }: TimeSlotPickerProps) => {
   const [bookedSlots, setBookedSlots] = useState<BookedSlot[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -109,6 +115,18 @@ export const TimeSlotPicker = ({
     };
   }, [date]);
 
+  const isSlotTooSoon = (slot: string) => {
+    if (!date) return false;
+    
+    const now = new Date();
+    const [hours, minutes] = slot.split(":").map(Number);
+    const slotDate = new Date(date);
+    slotDate.setHours(hours, minutes, 0, 0);
+
+    const minAdvanceMs = schedulingRules.min_advance_hours * 60 * 60 * 1000;
+    return slotDate.getTime() < now.getTime() + minAdvanceMs;
+  };
+
   const isSlotBooked = (slot: string) => {
     return bookedSlots.some((booked) => booked.time === slot);
   };
@@ -167,20 +185,22 @@ export const TimeSlotPicker = ({
         <TooltipProvider>
           {timeSlots.map((slot) => {
             const isBooked = isSlotBooked(slot);
+            const isTooSoon = isSlotTooSoon(slot);
+            const isDisabled = isBooked || isTooSoon;
             const bookedInfo = getBookedSlotInfo(slot);
             const isSelected = selectedTime === slot;
 
             const slotButton = (
               <button
                 type="button"
-                onClick={() => !isBooked && onTimeSelect(slot)}
-                disabled={isBooked}
+                onClick={() => !isDisabled && onTimeSelect(slot)}
+                disabled={isDisabled}
                 className={cn(
                   "relative p-3 rounded-lg border-2 transition-all duration-200 font-medium text-sm",
                   "hover:scale-105 active:scale-95",
-                  isBooked &&
+                  isDisabled &&
                     "bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed opacity-60",
-                  !isBooked &&
+                  !isDisabled &&
                     !isSelected &&
                     "bg-white border-green-200 text-foreground hover:border-green-400 hover:bg-green-50",
                   isSelected &&
@@ -193,27 +213,22 @@ export const TimeSlotPicker = ({
                     <CheckCircle2 className="w-4 h-4 animate-scale-in" />
                   )}
                   {isBooked && <XCircle className="w-4 h-4" />}
+                  {isTooSoon && !isBooked && <Clock className="w-3 h-3 opacity-50" />}
                 </div>
               </button>
             );
 
-            if (isBooked && bookedInfo) {
-              return (
+            if (isDisabled) {
+               return (
                 <Tooltip key={slot}>
                   <TooltipTrigger asChild>{slotButton}</TooltipTrigger>
                   <TooltipContent>
-                    <div className="text-sm">
-                      <p className="font-semibold">{slot} - Ocupado</p>
-                      <p className="text-muted-foreground">
-                        {bookedInfo.clientName}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {bookedInfo.service}
-                      </p>
-                    </div>
+                    <p className="text-sm">
+                        {isBooked ? "Já reservado" : `Aviso mínimo de ${schedulingRules.min_advance_hours}h necessário`}
+                    </p>
                   </TooltipContent>
                 </Tooltip>
-              );
+               );
             }
 
             return <div key={slot}>{slotButton}</div>;
