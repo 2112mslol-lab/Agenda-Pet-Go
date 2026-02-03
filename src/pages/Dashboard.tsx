@@ -87,6 +87,9 @@ interface Profile {
   secondary_color: string | null;
   scheduling_rules: any;
   notification_settings: any;
+  stripe_customer_id: string | null;
+  subscription_status: string | null;
+  subscription_plan: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -283,6 +286,33 @@ const Dashboard = () => {
     } finally {
       if (isLogo) setIsUploadingLogo(false);
       else setIsUploadingBg(false);
+    }
+  };
+
+  const handleSubscription = async (method: 'card' | 'pix') => {
+    setIsUpdatingSettings(true);
+    try {
+      toast.info(`Iniciando checkout via ${method === 'card' ? 'Cartão' : 'PIX'}...`);
+      
+      // Chamada para a Edge Function que criará a preferência de pagamento no Mercado Pago
+      const { data, error } = await supabase.functions.invoke('create-mercadopago-checkout', {
+        body: { 
+          method,
+          userId,
+          shopName: profile?.name,
+          email: (await supabase.auth.getUser()).data.user?.email
+        }
+      });
+
+      if (error) throw error;
+      if (data?.init_point) {
+        window.location.href = data.init_point; // Redireciona para o checkout do MP
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao iniciar pagamento. Verifique sua conexão.");
+    } finally {
+      setIsUpdatingSettings(false);
     }
   };
 
@@ -871,27 +901,29 @@ const Dashboard = () => {
                 
                 <div className="relative z-10">
                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md text-xs font-black uppercase tracking-widest mb-6 border border-white/20">
-                    🔥 Plano Pet Shop Pro Ativo
+                    {profile?.subscription_status === 'active' ? '🔥 Plano Pet Shop Pro Ativo' : '🛡️ Período de Testes'}
                   </div>
                   <h2 className="text-4xl md:text-5xl font-black mb-6">Mantenha sua <br />gestão imparável</h2>
                   <p className="text-xl text-white/80 max-w-xl mb-10 font-medium">
-                    Seu acesso ao **AgendaPetGo** é vitalício enquanto a assinatura estiver ativa. 
-                    Sem contratos, cancele quando quiser.
+                    {profile?.subscription_status === 'active' 
+                      ? "Seu Pet Shop está em plena potência. Todos os recursos pro estão liberados."
+                      : "Sua conta está em modo de demonstração. Assine para garantir que sua agenda nunca pare."}
                   </p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
                     <div className="p-6 bg-white/10 rounded-3xl border border-white/10 backdrop-blur-md">
-                      <p className="text-xs font-bold text-white/50 uppercase mb-4 tracking-widest">Pague via PIX (Desconto Direto)</p>
+                      <p className="text-xs font-bold text-white/50 uppercase mb-4 tracking-widest">Plano Mensal via PIX</p>
                       <div className="flex items-center gap-4 text-2xl font-black mb-4">
                         <QrCode className="w-8 h-8" />
                         <span>R$ 29,90 / mês</span>
                       </div>
-                      <p className="text-[10px] text-white/40 mb-4">* Use a chave PIX abaixo e envie o comprovante.</p>
-                      <code className="block p-3 bg-black/30 rounded-xl text-xs font-mono break-all mb-4 border border-white/5">
-                        shitara.massami@gmail.com
-                      </code>
-                      <Button className="w-full bg-white text-slate-900 hover:bg-white/90 font-black h-12 rounded-xl">
-                        Copiado Chave PIX
+                      <p className="text-[10px] text-white/40 mb-4">* Pagamento único ou recorrente com liberação imediata.</p>
+                      <Button 
+                        onClick={() => handleSubscription('pix')} 
+                        disabled={isUpdatingSettings}
+                        className="w-full bg-white text-slate-900 hover:bg-white/90 font-black h-12 rounded-xl"
+                      >
+                        {isUpdatingSettings ? "Processando..." : "Assinar com PIX"}
                       </Button>
                     </div>
 
@@ -901,16 +933,22 @@ const Dashboard = () => {
                         <CreditCard className="w-8 h-8" />
                         <span>Checkout Seguro</span>
                       </div>
-                      <p className="text-sm text-white/60 mb-6 font-medium">Renovação automática mensal sem surpresas.</p>
-                      <Button className="w-full bg-primary text-white hover:bg-primary/90 font-black h-12 rounded-xl shadow-xl shadow-primary/20">
-                        Ativar Cartão de Crédito
+                      <p className="text-sm text-white/60 mb-6 font-medium">Assinatura automática via Mercado Pago.</p>
+                      <Button 
+                        onClick={() => handleSubscription('card')} 
+                        disabled={isUpdatingSettings}
+                        className="w-full bg-primary text-white hover:bg-primary/90 font-black h-12 rounded-xl shadow-xl shadow-primary/20"
+                      >
+                        {isUpdatingSettings ? "Processando..." : "Assinar com Cartão"}
                       </Button>
                     </div>
                   </div>
                   
-                  <div className="mt-12 text-center text-xs text-white/40 font-bold uppercase tracking-[0.2em]">
-                    PRÓXIMA COBRANÇA EM 14 DIAS
-                  </div>
+                  {profile?.subscription_status === 'active' && (
+                    <div className="mt-12 text-center text-xs text-white/40 font-bold uppercase tracking-[0.2em]">
+                      ASSINATURA GERENCIADA PELO MERCADO PAGO
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
