@@ -131,7 +131,10 @@ const ProfessionalProfile = () => {
     fetchProfileData();
   }, [slug, navigate]);
 
-  const handleBookingSuccess = () => {
+  const [lastPaymentMethod, setLastPaymentMethod] = useState<string>("");
+
+  const handleBookingSuccess = (method: string) => {
+    setLastPaymentMethod(method);
     setShowSuccess(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -188,7 +191,11 @@ const ProfessionalProfile = () => {
       </header>
 
       {showSuccess ? (
-        <BookingSuccess onNewBooking={handleNewBooking} />
+        <BookingSuccess 
+          onNewBooking={handleNewBooking} 
+          paymentMethod={lastPaymentMethod}
+          paymentSettings={profile.payment_settings}
+        />
       ) : (
         <>
           <HeroSection 

@@ -54,7 +54,7 @@ interface Professional {
 
 interface BookingFormProps {
   selectedService: string;
-  onSuccess: () => void;
+  onSuccess: (method: string) => void;
   services: Service[];
   profileId?: string;
   schedulingRules?: {
@@ -153,6 +153,7 @@ export const BookingForm = ({
         data_hora: dateTime.toISOString(),
         status: "pendente",
         payment_method: paymentMethod,
+        valor: selectedServiceData?.price || 0,
       });
 
       if (error) {
@@ -163,7 +164,7 @@ export const BookingForm = ({
       }
 
       toast.success("Agendamento solicitado com sucesso!");
-      onSuccess();
+      onSuccess(paymentMethod);
     } catch (error: any) {
       console.error("Error creating booking:", error);
       toast.error(error.message || "Erro ao criar agendamento. Tente novamente.");

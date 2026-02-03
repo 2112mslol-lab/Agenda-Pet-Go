@@ -22,8 +22,13 @@ import {
   Image as ImageIcon,
   CreditCard,
   Wallet,
-  QrCode
+  QrCode,
+  BarChart3,
+  TrendingUp,
+  DollarSign,
+  Filter
 } from "lucide-react";
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -52,6 +57,7 @@ interface Appointment {
   pet_name: string | null;
   pet_species: string | null;
   payment_method: string | null;
+  valor: number;
 }
 
 interface Profile {
@@ -100,6 +106,7 @@ const Dashboard = () => {
   const [shopName, setShopName] = useState("");
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
   
+  const [viewMode, setViewMode] = useState<'dia' | 'semana' | 'mes' | 'todos'>('todos');
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
   const [settings, setSettings] = useState({
     logo_url: "",
@@ -314,6 +321,38 @@ const Dashboard = () => {
 
   const pendingCount = appointments.filter((a) => a.status === "pendente").length;
 
+  const filteredAppointments = appointments.filter(apt => {
+    if (viewMode === 'todos') return true;
+    const date = new Date(apt.data_hora);
+    const now = new Date();
+    
+    if (viewMode === 'dia') {
+      return isWithinInterval(date, { start: startOfDay(now), end: endOfDay(now) });
+    }
+    if (viewMode === 'semana') {
+      return isWithinInterval(date, { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) });
+    }
+    if (viewMode === 'mes') {
+      return isWithinInterval(date, { start: startOfMonth(now), end: endOfMonth(now) });
+    }
+    return true;
+  });
+
+  const financialMetrics = appointments
+    .filter(a => a.status === 'confirmado')
+    .reduce((acc, curr) => {
+      const date = new Date(curr.data_hora);
+      const now = new Date();
+      const val = Number(curr.valor) || 0;
+
+      acc.total += val;
+      if (isWithinInterval(date, { start: startOfDay(now), end: endOfDay(now) })) acc.hoje += val;
+      if (isWithinInterval(date, { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) })) acc.semana += val;
+      if (isWithinInterval(date, { start: startOfMonth(now), end: endOfMonth(now) })) acc.mes += val;
+      
+      return acc;
+    }, { total: 0, hoje: 0, semana: 0, mes: 0 });
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 bg-card border-b border-border">
@@ -390,15 +429,19 @@ const Dashboard = () => {
             </div>
         ) : (
           <Tabs defaultValue="agendamentos" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-[800px]">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 lg:w-full max-w-[1200px]">
             <TabsTrigger value="agendamentos" className="gap-2">
               <Calendar className="w-4 h-4" />
-              <span className="hidden lg:inline">Agendamentos</span>
+              <span className="hidden lg:inline">Agenda</span>
               {pendingCount > 0 && (
                 <Badge variant="secondary" className="ml-1 px-1.5 h-5 min-w-[20px] justify-center">
                   {pendingCount}
                 </Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="financeiro" className="gap-2 text-emerald-600">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden lg:inline">Financeiro</span>
             </TabsTrigger>
             <TabsTrigger value="profissionais" className="gap-2">
               <Users className="w-4 h-4" />
@@ -412,34 +455,69 @@ const Dashboard = () => {
               <Clock className="w-4 h-4" />
               <span className="hidden lg:inline">Horários</span>
             </TabsTrigger>
-            <TabsTrigger value="pagamentos" className="gap-2">
-              <Wallet className="w-4 h-4" />
-              <span className="hidden lg:inline">Pagamentos</span>
+            <TabsTrigger value="assinatura" className="gap-2 text-primary font-bold">
+              <CreditCard className="w-4 h-4" />
+              <span className="hidden lg:inline">Assinatura</span>
             </TabsTrigger>
             <TabsTrigger value="config" className="gap-2">
               <Settings className="w-4 h-4" />
-              <span className="hidden lg:inline">Configurações</span>
+              <span className="hidden lg:inline">Ajustes</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="agendamentos">
+          <TabsContent value="agendamentos" className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2 mb-6 bg-muted/30 p-2 rounded-2xl border w-fit">
+              <Button 
+                variant={viewMode === 'dia' ? 'default' : 'ghost'} 
+                size="sm" 
+                onClick={() => setViewMode('dia')}
+                className="rounded-xl font-bold"
+              >
+                Hoje
+              </Button>
+              <Button 
+                variant={viewMode === 'semana' ? 'default' : 'ghost'} 
+                size="sm" 
+                onClick={() => setViewMode('semana')}
+                className="rounded-xl font-bold"
+              >
+                Semana
+              </Button>
+              <Button 
+                variant={viewMode === 'mes' ? 'default' : 'ghost'} 
+                size="sm" 
+                onClick={() => setViewMode('mes')}
+                className="rounded-xl font-bold"
+              >
+                Mês
+              </Button>
+              <Button 
+                variant={viewMode === 'todos' ? 'default' : 'ghost'} 
+                size="sm" 
+                onClick={() => setViewMode('todos')}
+                className="rounded-xl font-bold"
+              >
+                Todos
+              </Button>
+            </div>
+
             {loading ? (
               <div className="flex items-center justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ) : appointments.length === 0 ? (
-              <div className="text-center py-20">
-                <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+            ) : filteredAppointments.length === 0 ? (
+              <div className="text-center py-20 bg-card rounded-3xl border border-dashed border-border">
+                <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
                 <h2 className="text-xl font-semibold text-foreground mb-2">
-                  Nenhum agendamento encontrado
+                  Nenhum agendamento neste período
                 </h2>
                 <p className="text-muted-foreground max-w-sm mx-auto">
-                   Os agendamentos dos seus clientes aparecerão aqui.
+                   Os agendamentos filtrados por {viewMode} aparecerão aqui.
                 </p>
               </div>
             ) : (
               <div className="grid gap-4">
-                {appointments.map((appointment) => {
+                {filteredAppointments.map((appointment) => {
                   const config = statusConfig[appointment.status];
                   const isUpdating = updatingId === appointment.id;
                   const isPending = appointment.status === "pendente";
@@ -557,91 +635,112 @@ const Dashboard = () => {
             {profile && <BusinessHoursManager profileId={profile.id} />}
           </TabsContent>
 
-          <TabsContent value="pagamentos">
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="border-2 border-primary/10">
-                  <CardHeader>
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-2">
-                      <QrCode className="w-6 h-6 text-primary" />
-                    </div>
-                    <CardTitle>Pagamento via PIX</CardTitle>
-                    <CardDescription>Configure como seus clientes pagarão via PIX</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border rounded-xl">
-                      <div className="space-y-0.5">
-                        <Label>Habilitar PIX</Label>
-                        <p className="text-xs text-muted-foreground">Ofereça PIX como opção no agendamento</p>
-                      </div>
-                      <Switch 
-                        checked={settings.payment_settings.accept_pix}
-                        onCheckedChange={(val) => setSettings({
-                          ...settings,
-                          payment_settings: { ...settings.payment_settings, accept_pix: val }
-                        })}
-                      />
-                    </div>
-                    {settings.payment_settings.accept_pix && (
-                      <div className="space-y-2 animate-fade-in">
-                        <Label>Sua Chave PIX</Label>
-                        <Input 
-                          placeholder="CPF, E-mail, Celular ou Chave Aleatória"
-                          value={settings.payment_settings.pix_key}
-                          onChange={(e) => setSettings({
-                            ...settings,
-                            payment_settings: { ...settings.payment_settings, pix_key: e.target.value }
-                          })}
-                        />
-                        <p className="text-[10px] text-muted-foreground">Esta chave será exibida ao cliente após o agendamento.</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+          <TabsContent value="financeiro">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="border-2 border-emerald-500/10 shadow-lg bg-emerald-50/10 transition-transform hover:scale-[1.02]">
+                <CardHeader className="pb-2">
+                  <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-2">
+                    <DollarSign className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <CardTitle className="text-sm font-medium text-emerald-600 uppercase tracking-wider">Faturamento Hoje</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-black">R$ {financialMetrics.hoje.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Total de hoje confirmado</p>
+                </CardContent>
+              </Card>
 
-                <Card className="border-2 border-primary/10">
-                  <CardHeader>
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-2">
-                      <CreditCard className="w-6 h-6 text-primary" />
-                    </div>
-                    <CardTitle>Cartão e Presencial</CardTitle>
-                    <CardDescription>Outras formas de recebimento</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border rounded-xl">
-                      <div className="space-y-0.5">
-                        <Label>Aceitar Cartão (Online)</Label>
-                        <p className="text-xs text-muted-foreground">Requer integração com checkout</p>
+              <Card className="border-2 border-primary/10 shadow-lg bg-primary-50/10 transition-transform hover:scale-[1.02]">
+                <CardHeader className="pb-2">
+                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mb-2">
+                    <TrendingUp className="w-5 h-5 text-primary" />
+                  </div>
+                  <CardTitle className="text-sm font-medium text-primary uppercase tracking-wider">Esta Semana</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-black">R$ {financialMetrics.semana.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Faturamento semanal</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-2 border-slate-900/10 shadow-lg bg-slate-50 transition-transform hover:scale-[1.02]">
+                <CardHeader className="pb-2">
+                  <div className="w-10 h-10 bg-slate-900/10 rounded-xl flex items-center justify-center mb-2">
+                    <BarChart3 className="w-5 h-5 text-slate-900" />
+                  </div>
+                  <CardTitle className="text-sm font-medium text-slate-900 uppercase tracking-wider">Este Mês</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-black">R$ {financialMetrics.mes.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Projeção mensal atual</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-2 border-slate-900/10 shadow-lg border-dashed transition-transform hover:scale-[1.02]">
+                <CardHeader className="pb-2">
+                  <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center mb-2">
+                    <Check className="w-5 h-5 text-slate-600" />
+                  </div>
+                  <CardTitle className="text-sm font-medium text-slate-600 uppercase tracking-wider">Total Acumulado</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-black">R$ {financialMetrics.total.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Desde o início</p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="assinatura">
+            <div className="max-w-4xl mx-auto space-y-8">
+              <div className="bg-gradient-to-br from-primary/95 to-slate-900 p-8 md:p-12 rounded-[3rem] text-white shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-10">
+                   <PawPrint className="w-48 h-48 rotate-12" />
+                </div>
+                
+                <div className="relative z-10">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md text-xs font-black uppercase tracking-widest mb-6 border border-white/20">
+                    🔥 Plano Pet Shop Pro Ativo
+                  </div>
+                  <h2 className="text-4xl md:text-5xl font-black mb-6">Mantenha sua <br />gestão imparável</h2>
+                  <p className="text-xl text-white/80 max-w-xl mb-10 font-medium">
+                    Seu acesso ao **AgendaPetGo** é vitalício enquanto a assinatura estiver ativa. 
+                    Sem contratos, cancele quando quiser.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+                    <div className="p-6 bg-white/10 rounded-3xl border border-white/10 backdrop-blur-md">
+                      <p className="text-xs font-bold text-white/50 uppercase mb-4 tracking-widest">Pague via PIX (Desconto Direto)</p>
+                      <div className="flex items-center gap-4 text-2xl font-black mb-4">
+                        <QrCode className="w-8 h-8" />
+                        <span>R$ 29,90 / mês</span>
                       </div>
-                      <Switch 
-                        checked={settings.payment_settings.accept_card}
-                        onCheckedChange={(val) => setSettings({
-                          ...settings,
-                          payment_settings: { ...settings.payment_settings, accept_card: val }
-                        })}
-                      />
+                      <p className="text-[10px] text-white/40 mb-4">* Use a chave PIX abaixo e envie o comprovante.</p>
+                      <code className="block p-3 bg-black/30 rounded-xl text-xs font-mono break-all mb-4 border border-white/5">
+                        pix@agendapetgo.com.br
+                      </code>
+                      <Button className="w-full bg-white text-slate-900 hover:bg-white/90 font-black h-12 rounded-xl">
+                        Copiado Chave PIX
+                      </Button>
                     </div>
-                    <div className="flex items-center justify-between p-4 border rounded-xl">
-                      <div className="space-y-0.5">
-                        <Label>Pagamento no Local</Label>
-                        <p className="text-xs text-muted-foreground">Cliente paga diretamente no pet shop</p>
+
+                    <div className="p-6 bg-slate-900/50 rounded-3xl border border-white/10">
+                      <p className="text-xs font-bold text-white/50 uppercase mb-4 tracking-widest">Cartão de Crédito</p>
+                      <div className="flex items-center gap-4 text-2xl font-black mb-4">
+                        <CreditCard className="w-8 h-8" />
+                        <span>Checkout Seguro</span>
                       </div>
-                      <Switch 
-                        checked={settings.payment_settings.payment_at_venue}
-                        onCheckedChange={(val) => setSettings({
-                          ...settings,
-                          payment_settings: { ...settings.payment_settings, payment_at_venue: val }
-                        })}
-                      />
+                      <p className="text-sm text-white/60 mb-6 font-medium">Renovação automática mensal sem surpresas.</p>
+                      <Button className="w-full bg-primary text-white hover:bg-primary/90 font-black h-12 rounded-xl shadow-xl shadow-primary/20">
+                        Ativar Cartão de Crédito
+                      </Button>
                     </div>
-                  </CardContent>
-                  <CardFooter className="bg-muted/30 p-4 rounded-b-xl flex justify-end">
-                    <Button onClick={handleUpdateSettings} disabled={isUpdatingSettings} className="gap-2 font-bold">
-                      {isUpdatingSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                      Salvar Formas de Pagamento
-                    </Button>
-                  </CardFooter>
-                </Card>
+                  </div>
+                  
+                  <div className="mt-12 text-center text-xs text-white/40 font-bold uppercase tracking-[0.2em]">
+                    PRÓXIMA COBRANÇA EM 14 DIAS
+                  </div>
+                </div>
               </div>
             </div>
           </TabsContent>
@@ -778,9 +877,9 @@ const Dashboard = () => {
                     <CardDescription>Configure os avisos automáticos</CardDescription>
                   </CardHeader>
                   <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="flex items-center justify-between p-4 border rounded-xl">
+                    <div className="flex items-center justify-between p-4 border rounded-xl bg-card">
                       <div className="space-y-0.5">
-                        <Label>Novo Agendamento</Label>
+                        <Label className="font-bold">Novo Agendamento</Label>
                         <p className="text-xs text-muted-foreground">Alerta no painel</p>
                       </div>
                       <Switch 
@@ -791,9 +890,9 @@ const Dashboard = () => {
                         })}
                       />
                     </div>
-                    <div className="flex items-center justify-between p-4 border rounded-xl">
+                    <div className="flex items-center justify-between p-4 border rounded-xl bg-card">
                       <div className="space-y-0.5">
-                        <Label>Lembrete 4h antes</Label>
+                        <Label className="font-bold">Lembrete 4h antes</Label>
                         <p className="text-xs text-muted-foreground">Aviso ao cliente</p>
                       </div>
                       <Switch 
@@ -804,9 +903,9 @@ const Dashboard = () => {
                         })}
                       />
                     </div>
-                    <div className="flex items-center justify-between p-4 border rounded-xl">
+                    <div className="flex items-center justify-between p-4 border rounded-xl bg-card">
                       <div className="space-y-0.5">
-                        <Label>Aviso Dia Anterior</Label>
+                        <Label className="font-bold">Aviso Dia Anterior</Label>
                         <p className="text-xs text-muted-foreground">Para horários cedo</p>
                       </div>
                       <Switch 
@@ -818,10 +917,79 @@ const Dashboard = () => {
                       />
                     </div>
                   </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-2 border-2 border-primary/20">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Wallet className="w-5 h-5 text-primary" />
+                      Pagamentos dos Clientes (No seu Site)
+                    </CardTitle>
+                    <CardDescription>Configure como seus clientes podem pagar pelo site</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 border rounded-xl bg-card">
+                        <div className="space-y-0.5">
+                          <Label className="font-bold">Aceitar PIX</Label>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-tight">Pagamento instantâneo</p>
+                        </div>
+                        <Switch 
+                          checked={settings.payment_settings.accept_pix}
+                          onCheckedChange={(val) => setSettings({
+                            ...settings,
+                            payment_settings: { ...settings.payment_settings, accept_pix: val }
+                          })}
+                        />
+                      </div>
+                      {settings.payment_settings.accept_pix && (
+                        <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                          <Label className="text-xs font-bold text-primary italic">Sua Chave PIX</Label>
+                          <Input 
+                            placeholder="CPF, E-mail, Celular ou Chave Aleatória"
+                            value={settings.payment_settings.pix_key}
+                            onChange={(e) => setSettings({
+                              ...settings,
+                              payment_settings: { ...settings.payment_settings, pix_key: e.target.value }
+                            })}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 border rounded-xl bg-card">
+                        <div className="space-y-0.5">
+                          <Label className="font-bold">Cartão (Online)</Label>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-tight">Checkout no site</p>
+                        </div>
+                        <Switch 
+                          checked={settings.payment_settings.accept_card}
+                          onCheckedChange={(val) => setSettings({
+                            ...settings,
+                            payment_settings: { ...settings.payment_settings, accept_card: val }
+                          })}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between p-4 border rounded-xl bg-card">
+                        <div className="space-y-0.5">
+                          <Label className="font-bold">Pagar no Local</Label>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-tight">Direto no balcão</p>
+                        </div>
+                        <Switch 
+                          checked={settings.payment_settings.payment_at_venue}
+                          onCheckedChange={(val) => setSettings({
+                            ...settings,
+                            payment_settings: { ...settings.payment_settings, payment_at_venue: val }
+                          })}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
                   <CardFooter className="bg-muted/30 p-4 rounded-b-xl flex justify-end">
-                    <Button onClick={handleUpdateSettings} disabled={isUpdatingSettings} className="gap-2 font-bold px-8 h-11">
+                    <Button onClick={handleUpdateSettings} disabled={isUpdatingSettings} className="gap-2 font-black px-8 h-11 shadow-lg shadow-primary/20">
                       {isUpdatingSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                      Salvar Configurações
+                      ATUALIZAR CONFIGURAÇÕES
                     </Button>
                   </CardFooter>
                 </Card>
