@@ -44,7 +44,7 @@ const AVAILABLE_ICONS = [
   { name: "Cat", icon: Cat },
 ];
 
-export const ServiceManager = ({ profileId }: { profileId: string }) => {
+export const ServiceManager = ({ profileId, disabled }: { profileId: string, disabled?: boolean }) => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
@@ -77,6 +77,10 @@ export const ServiceManager = ({ profileId }: { profileId: string }) => {
 
   const addService = async () => {
     if (!newService.title) return;
+    if (disabled) {
+      toast.error("Período de teste expirado. Ative sua assinatura para adicionar serviços.");
+      return;
+    }
     setAdding(true);
     const { error } = await supabase.from("services").insert({
       profile_id: profileId,
@@ -98,6 +102,10 @@ export const ServiceManager = ({ profileId }: { profileId: string }) => {
   };
 
   const deleteService = async (id: string) => {
+    if (disabled) {
+      toast.error("Período de teste expirado. Ative sua assinatura para gerenciar serviços.");
+      return;
+    }
     const { error } = await supabase.from("services").delete().eq("id", id);
     if (error) {
       toast.error("Erro ao remover serviço");

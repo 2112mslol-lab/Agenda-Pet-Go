@@ -19,7 +19,7 @@ interface BusinessHour {
   is_closed: boolean;
 }
 
-export const BusinessHoursManager = ({ profileId }: { profileId: string }) => {
+export const BusinessHoursManager = ({ profileId, disabled }: { profileId: string, disabled?: boolean }) => {
   const [hours, setHours] = useState<BusinessHour[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -56,6 +56,10 @@ export const BusinessHoursManager = ({ profileId }: { profileId: string }) => {
   };
 
   const saveHours = async () => {
+    if (disabled) {
+      toast.error("Período de teste expirado. Ative sua assinatura para alterar horários.");
+      return;
+    }
     setSaving(true);
     
     // Using upsert would be better if we have IDs, but for simplicity let's delete and insert

@@ -19,7 +19,7 @@ interface Professional {
   services?: string[]; // IDs of services they perform
 }
 
-export const ProfessionalManager = ({ profileId }: { profileId: string }) => {
+export const ProfessionalManager = ({ profileId, disabled }: { profileId: string, disabled?: boolean }) => {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +70,10 @@ export const ProfessionalManager = ({ profileId }: { profileId: string }) => {
 
   const addProfessional = async () => {
     if (!newName) return;
+    if (disabled) {
+      toast.error("Período de teste expirado. Ative sua assinatura para adicionar profissionais.");
+      return;
+    }
     setAdding(true);
     
     const { data, error } = await supabase.from("professionals").insert({
@@ -103,6 +107,10 @@ export const ProfessionalManager = ({ profileId }: { profileId: string }) => {
   };
 
   const deleteProfessional = async (id: string) => {
+    if (disabled) {
+      toast.error("Período de teste expirado. Ative sua assinatura para gerenciar profissionais.");
+      return;
+    }
     const { error } = await supabase.from("professionals").delete().eq("id", id);
     if (error) {
       toast.error("Erro ao remover profissional");

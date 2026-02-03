@@ -90,6 +90,7 @@ interface Profile {
   stripe_customer_id: string | null;
   subscription_status: string | null;
   subscription_plan: string | null;
+  trial_ends_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -158,6 +159,11 @@ const Dashboard = () => {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
+
+  const isTrialActive = profile?.subscription_status === 'trialing';
+  const trialEndsAt = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null;
+  const isTrialExpired = isTrialActive && trialEndsAt && trialEndsAt < new Date();
+  const daysRemaining = trialEndsAt ? Math.ceil((trialEndsAt.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -455,6 +461,46 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 bg-card border-b border-border">
+        {isTrialActive && !isTrialExpired && (
+          <div className="bg-primary/10 border-b border-primary/20 py-2">
+            <div className="container mx-auto px-4 flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-primary">
+              <div className="flex items-center gap-2">
+                <Clock className="w-3 h-3" />
+                <span>Modo de Teste Grátis: {daysRemaining} dias restantes</span>
+              </div>
+              <button 
+                onClick={() => {
+                  const tabsList = document.querySelector('[role="tablist"]');
+                  const subscriptionTab = tabsList?.querySelector('[value="assinatura"]') as HTMLButtonElement;
+                  subscriptionTab?.click();
+                }}
+                className="hover:underline"
+              >
+                Assinar agora →
+              </button>
+            </div>
+          </div>
+        )}
+        {isTrialExpired && (
+          <div className="bg-destructive/10 border-b border-destructive/20 py-2">
+            <div className="container mx-auto px-4 flex items-center justify-between text-[11px] font-black uppercase tracking-widest text-destructive">
+              <div className="flex items-center gap-2">
+                <X className="w-3 h-3" />
+                <span>Seu período de teste expirou. Assine para continuar usando.</span>
+              </div>
+              <button 
+                onClick={() => {
+                  const tabsList = document.querySelector('[role="tablist"]');
+                  const subscriptionTab = tabsList?.querySelector('[value="assinatura"]') as HTMLButtonElement;
+                  subscriptionTab?.click();
+                }}
+                className="hover:underline font-black"
+              >
+                ATIVAR CONTA AGORA →
+              </button>
+            </div>
+          </div>
+        )}
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -708,7 +754,13 @@ const Dashboard = () => {
                           {isPending && (
                             <>
                               <Button
-                                onClick={() => updateStatus(appointment.id, "confirmado")}
+                                onClick={() => {
+                                  if (isTrialExpired) {
+                                    toast.error("Seu período de teste expirou. Ative sua assinatura para gerenciar agendamentos.");
+                                    return;
+                                  }
+                                  updateStatus(appointment.id, "confirmado");
+                                }}
                                 disabled={isUpdating}
                                 className="flex-1 md:flex-none gap-2"
                               >
@@ -716,7 +768,13 @@ const Dashboard = () => {
                                 Confirmar
                               </Button>
                               <Button
-                                onClick={() => updateStatus(appointment.id, "recusado")}
+                                onClick={() => {
+                                  if (isTrialExpired) {
+                                    toast.error("Seu período de teste expirou. Ative sua assinatura para gerenciar agendamentos.");
+                                    return;
+                                  }
+                                  updateStatus(appointment.id, "recusado");
+                                }}
                                 disabled={isUpdating}
                                 variant="outline"
                                 className="flex-1 md:flex-none gap-2 border-destructive text-destructive"
@@ -769,15 +827,15 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="profissionais">
-            {profile && <ProfessionalManager profileId={profile.id} />}
+            {profile && <ProfessionalManager profileId={profile.id} disabled={isTrialExpired} />}
           </TabsContent>
 
           <TabsContent value="servicos">
-            {profile && <ServiceManager profileId={profile.id} />}
+            {profile && <ServiceManager profileId={profile.id} disabled={isTrialExpired} />}
           </TabsContent>
 
           <TabsContent value="horarios">
-            {profile && <BusinessHoursManager profileId={profile.id} />}
+            {profile && <BusinessHoursManager profileId={profile.id} disabled={isTrialExpired} />}
           </TabsContent>
 
           <TabsContent value="financeiro">
@@ -1138,7 +1196,13 @@ const Dashboard = () => {
 
                 <div className="flex justify-end pt-4">
                   <Button 
-                    onClick={handleUpdateSettings} 
+                    onClick={() => {
+                      if (isTrialExpired) {
+                        toast.error("Seu período de teste expirou. Ative sua assinatura para salvar alterações.");
+                        return;
+                      }
+                      handleUpdateSettings();
+                    }} 
                     disabled={isUpdatingSettings} 
                     className="gap-2 font-black px-12 h-14 text-lg shadow-xl shadow-primary/20 rounded-2xl"
                   >
