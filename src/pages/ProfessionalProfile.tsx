@@ -30,6 +30,32 @@ interface Service {
   icon_name?: string;
 }
 
+const hexToHsl = (hex: string): string => {
+  // Remove # if present
+  hex = hex.replace(/^#/, '');
+
+  // Parse r, g, b
+  let r = parseInt(hex.substring(0, 2), 16) / 255;
+  let g = parseInt(hex.substring(2, 4), 16) / 255;
+  let b = parseInt(hex.substring(4, 6), 16) / 255;
+
+  let max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+
+  if (max !== min) {
+    let d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+};
+
 const ProfessionalProfile = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -119,15 +145,22 @@ const ProfessionalProfile = () => {
 
   if (!profile) return null;
 
-  const primaryColor = profile.primary_color || "#10b981";
+  const primaryHex = profile.primary_color || "#10b981";
+  const primaryHsl = hexToHsl(primaryHex);
 
   return (
     <div className="min-h-screen gradient-subtle">
        <style>{`
          :root {
-           --primary: ${primaryColor};
-           --primary-foreground: #fff;
+           --primary: ${primaryHsl};
+           --ring: ${primaryHsl};
          }
+         .text-primary { color: hsl(${primaryHsl}); }
+         .bg-primary { background-color: hsl(${primaryHsl}); }
+         .border-primary { border-color: hsl(${primaryHsl}); }
+         .bg-primary\\/10 { background-color: hsla(${primaryHsl}, 0.1); }
+         .bg-primary\\/20 { background-color: hsla(${primaryHsl}, 0.2); }
+         .text-primary-foreground { color: #fff; }
        `}</style>
 
       <header className="bg-background/80 backdrop-blur-md border-b sticky top-0 z-50">

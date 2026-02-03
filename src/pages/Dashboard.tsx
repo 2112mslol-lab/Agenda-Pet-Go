@@ -16,8 +16,9 @@ import {
   X,
   Settings,
   Users,
-  Scissors,
-  PawPrint
+  PawPrint,
+  Upload,
+  Image as ImageIcon
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -93,6 +94,9 @@ const Dashboard = () => {
       client_reminder_day_before: true,
     }
   });
+
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingBg, setIsUploadingBg] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -178,6 +182,50 @@ const Dashboard = () => {
       toast.error("Erro ao salvar configurações");
     } finally {
       setIsUpdatingSettings(false);
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'bg') => {
+    const file = event.target.files?.[0];
+    if (!file || !userId) return;
+
+    // Limit size to 2MB
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Imagem muito grande. Limite de 2MB.");
+      return;
+    }
+
+    const isLogo = type === 'logo';
+    if (isLogo) setIsUploadingLogo(true);
+    else setIsUploadingBg(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${type}-${Date.now()}.${fileExt}`;
+      const filePath = `${userId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('shop-assets')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('shop-assets')
+        .getPublicUrl(filePath);
+
+      setSettings(prev => ({
+        ...prev,
+        [isLogo ? 'logo_url' : 'hero_bg_url']: publicUrl
+      }));
+      
+      toast.success(`${isLogo ? 'Logo' : 'Plano de fundo'} carregado com sucesso!`);
+    } catch (error: any) {
+      toast.error("Erro ao enviar imagem");
+      console.error(error);
+    } finally {
+      if (isLogo) setIsUploadingLogo(false);
+      else setIsUploadingBg(false);
     }
   };
 
@@ -506,21 +554,56 @@ const Dashboard = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>URL da Logo (PNG transparente ideal)</Label>
-                      <Input 
-                        placeholder="https://exemplo.com/logo.png" 
-                        value={settings.logo_url}
-                        onChange={(e) => setSettings({...settings, logo_url: e.target.value})}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>URL do Plano de Fundo (Página Inicial)</Label>
-                      <Input 
-                        placeholder="https://exemplo.com/hero-bg.jpg" 
-                        value={settings.hero_bg_url}
-                        onChange={(e) => setSettings({...settings, hero_bg_url: e.target.value})}
-                      />
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Logo do Pet Shop</Label>
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 rounded-lg bg-muted border-2 border-dashed flex items-center justify-center overflow-hidden shrink-0">
+                            {settings.logo_url ? (
+                              <img src={settings.logo_url} alt="Logo" className="w-full h-full object-contain" />
+                            ) : (
+                              <Upload className="w-6 h-6 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <Input 
+                              type="file" 
+                              accept="image/*" 
+                              onChange={(e) => handleFileUpload(e, 'logo')}
+                              disabled={isUploadingLogo}
+                              className="cursor-pointer"
+                            />
+                            <p className="text-[10px] text-muted-foreground">Recomendado: PNG Transparente 512x512px</p>
+                          </div>
+                          {isUploadingLogo && <Loader2 className="w-4 h-4 animate-spin" />}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Plano de Fundo (Hero)</Label>
+                        <div className="space-y-2">
+                          <div className="aspect-video w-full rounded-xl bg-muted border-2 border-dashed flex items-center justify-center overflow-hidden">
+                            {settings.hero_bg_url ? (
+                              <img src={settings.hero_bg_url} alt="Hero BG" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="text-center">
+                                <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                                <p className="text-xs text-muted-foreground">Nenhuma imagem selecionada</p>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex gap-2 items-center">
+                            <Input 
+                              type="file" 
+                              accept="image/*" 
+                              onChange={(e) => handleFileUpload(e, 'bg')}
+                              disabled={isUploadingBg}
+                              className="cursor-pointer"
+                            />
+                            {isUploadingBg && <Loader2 className="w-4 h-4 animate-spin" />}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
