@@ -149,6 +149,14 @@ const Dashboard = () => {
 
   useEffect(() => {
     document.title = "Painel Gestor | AgendaPetGo";
+    
+    // Verificar se voltou de um pagamento com sucesso
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      toast.success("Pagamento processado! Sua assinatura será ativada em instantes.");
+      // Limpa a URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
   useEffect(() => {

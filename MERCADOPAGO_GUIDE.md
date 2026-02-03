@@ -27,46 +27,63 @@ serve(async (req) => {
   try {
     const { method, userId, shopName, email } = await req.json()
 
-    // Configuração da Preferência de Pagamento
-    const preference = {
-      items: [
-        {
-          title: `Assinatura AgendaPetGo - ${shopName}`,
-          unit_price: 29.90,
-          quantity: 1,
-          currency_id: 'BRL'
-        }
-      ],
-      payer: {
-        email: email
-      },
-      external_reference: userId,
-      back_urls: {
-        success: `${req.headers.get('origin')}/dashboard?payment=success`,
-        failure: `${req.headers.get('origin')}/dashboard?payment=failure`,
-        pending: `${req.headers.get('origin')}/dashboard?payment=pending`,
-      },
-      auto_return: 'approved',
+    if (method === 'card') {
+      // LOGICA PARA ASSINATURA RECORRENTE (CARTÃO)
+      const subscriptionData = {
+        preapproval_plan_id: '816edd4373214aaf8b192b7702522a77', // Seu ID do Plano
+        payer_email: email,
+        external_reference: userId,
+        back_url: `${req.headers.get('origin')}/dashboard?payment=success`,
+        status: 'authorized'
+      }
+
+      const response = await fetch('https://api.mercadopago.com/preapproval', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(subscriptionData)
+      })
+
+      const data = await response.json()
+      return new Response(
+        JSON.stringify({ init_point: data.init_point }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+
+    } else {
+      // LOGICA PARA PIX (PAGAMENTO ÚNICO/AVULSO)
+      const preference = {
+        items: [{
+            title: `Assinatura Pro - ${shopName}`,
+            unit_price: 29.90,
+            quantity: 1,
+            currency_id: 'BRL'
+        }],
+        payer: { email: email },
+        external_reference: userId,
+        back_urls: {
+          success: `${req.headers.get('origin')}/dashboard?payment=success`,
+        },
+        auto_return: 'approved',
+      }
+      
+      const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(preference)
+      })
+
+      const data = await response.json()
+      return new Response(
+        JSON.stringify({ init_point: data.init_point }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
-
-    // Se for Cartão, podemos criar um Plano de Assinatura (Pre-Approval)
-    // Para simplificar neste exemplo, usaremos a Preference API que aceita Pix e Cartão
-    
-    const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(preference)
-    })
-
-    const data = await response.json()
-
-    return new Response(
-      JSON.stringify({ init_point: data.init_point }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
 
   } catch (error) {
     return new Response(
