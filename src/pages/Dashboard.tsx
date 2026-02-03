@@ -1090,6 +1090,16 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
 
+                <div className="flex justify-end pt-4">
+                  <Button 
+                    onClick={handleUpdateSettings} 
+                    disabled={isUpdatingSettings} 
+                    className="gap-2 font-black px-12 h-14 text-lg shadow-xl shadow-primary/20 rounded-2xl"
+                  >
+                    {isUpdatingSettings ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
+                    SALVAR TODAS AS ALTERAÇÕES
+                  </Button>
+                </div>
               </div>
             </div>
           </TabsContent>
