@@ -360,17 +360,21 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link to="/">
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="rounded-full">
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
               </Link>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">
-                  Painel Pet Shop
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                    {profile ? `Olá, ${profile.name}` : "Gerencie seu estabelecimento"}
-                </p>
+              <div className="flex items-center gap-3">
+                <img src="/logo.png" alt="AgendaPetGo" className="h-10 w-auto object-contain hidden sm:block" />
+                <div className="h-8 w-[1px] bg-border hidden sm:block" />
+                <div>
+                  <h1 className="text-lg font-black text-foreground leading-tight tracking-tighter uppercase">
+                    Painel Gestor
+                  </h1>
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-widest">
+                      {profile ? profile.name : "Agendapetgo"}
+                  </p>
+                </div>
               </div>
             </div>
 

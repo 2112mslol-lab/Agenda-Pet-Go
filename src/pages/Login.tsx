@@ -97,10 +97,8 @@ const Login = () => {
 
       <Card className="w-full max-w-md shadow-xl border-border/50 backdrop-blur-sm bg-card/80">
         <CardHeader className="text-center space-y-1">
-          <div className="flex justify-center mb-4">
-             <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-                <PawPrint className="text-primary-foreground w-7 h-7" />
-             </div>
+          <div className="flex justify-center mb-6">
+             <img src="/logo.png" alt="AgendaPetGo" className="h-16 w-auto object-contain" />
           </div>
           <CardTitle className="text-3xl font-extrabold tracking-tight">
             {mode === "login" ? "Entrar" : "Criar Conta"}

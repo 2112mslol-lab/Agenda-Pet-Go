@@ -18,12 +18,9 @@ const Index = () => {
       {/* Navigation */}
       <nav className="border-b border-white/10 bg-slate-900 text-white sticky top-0 z-50">
         <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
-              <PawPrint className="text-white w-7 h-7" />
-            </div>
-            <span className="font-bold text-2xl tracking-tighter">AgendaPetGo</span>
-          </div>
+          <Link to="/" className="flex items-center gap-3">
+            <img src="/logo.png" alt="AgendaPetGo" className="h-14 w-auto object-contain" />
+          </Link>
           <div className="flex items-center gap-4">
             <Link to="/login">
               <Button variant="ghost" className="text-white hover:bg-white/10">Entrar</Button>

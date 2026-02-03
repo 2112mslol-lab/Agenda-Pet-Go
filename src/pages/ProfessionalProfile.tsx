@@ -16,8 +16,11 @@ interface Profile {
   bio: string | null;
   avatar_url: string | null;
   logo_url: string | null;
+  hero_bg_url: string | null;
   primary_color: string | null;
   secondary_color: string | null;
+  scheduling_rules?: any;
+  notification_settings?: any;
   payment_settings?: {
     accept_pix: boolean;
     pix_key: string;
@@ -131,10 +134,7 @@ const ProfessionalProfile = () => {
     fetchProfileData();
   }, [slug, navigate]);
 
-  const [lastPaymentMethod, setLastPaymentMethod] = useState<string>("");
-
-  const handleBookingSuccess = (method: string) => {
-    setLastPaymentMethod(method);
+  const handleBookingSuccess = () => {
     setShowSuccess(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -191,11 +191,7 @@ const ProfessionalProfile = () => {
       </header>
 
       {showSuccess ? (
-        <BookingSuccess 
-          onNewBooking={handleNewBooking} 
-          paymentMethod={lastPaymentMethod}
-          paymentSettings={profile.payment_settings}
-        />
+        <BookingSuccess onNewBooking={handleNewBooking} />
       ) : (
         <>
           <HeroSection 
