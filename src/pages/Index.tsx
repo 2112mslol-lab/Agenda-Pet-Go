@@ -15,126 +15,135 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
-      <nav className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-              <PawPrint className="text-primary-foreground w-6 h-6" />
+      <nav className="border-b border-white/10 bg-slate-900 text-white sticky top-0 z-50">
+        <div className="container mx-auto px-4 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
+              <PawPrint className="text-white w-7 h-7" />
             </div>
-            <span className="font-bold text-xl tracking-tight">BookingBuddy</span>
+            <span className="font-bold text-2xl tracking-tighter">BookingBuddy</span>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/login">
-              <Button variant="ghost">Entrar</Button>
+              <Button variant="ghost" className="text-white hover:bg-white/10">Entrar</Button>
             </Link>
             <Link to="/login">
-              <Button className="font-semibold shadow-lg shadow-primary/20">Criar minha Conta</Button>
+              <Button className="font-bold px-6 bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/30">Criar minha Conta</Button>
             </Link>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="py-20 md:py-32 overflow-hidden relative">
-        <div className="absolute top-0 right-0 -z-10 w-1/3 h-1/2 bg-primary/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-0 left-0 -z-10 w-1/4 h-1/3 bg-success/10 blur-[100px] rounded-full" />
+      <section className="relative min-h-[85vh] flex items-center overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/hero-bg.png" 
+            alt="Pet Shop Interior" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/70 to-transparent" />
+        </div>
         
-        <div className="container mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-6 animate-fade-in">
-            <ShieldCheck className="w-3 h-3" />
-            O Micro-SaaS definitivo para Pet Shops
-          </div>
-          
-          <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight animate-slide-up">
-            Gerencie seu Pet Shop <br />
-            <span className="text-primary">sem complicação</span>
-          </h1>
-          
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-slide-up" style={{ animationDelay: '100ms' }}>
-            Agenda online inteligente, controle de profissionais, cadastro de pets e tudo que você precisa para crescer seu negócio em um só lugar.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: '200ms' }}>
-            <Link to="/login">
-              <Button size="lg" className="h-14 px-8 text-lg font-bold gap-2 group">
-                Começar agora
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary-foreground backdrop-blur-md text-sm font-bold uppercase tracking-widest mb-8 animate-fade-in border border-primary/30">
+              <ShieldCheck className="w-4 h-4" />
+              Plataforma Profissional 2026
+            </div>
+            
+            <h1 className="text-6xl md:text-8xl font-black text-white mb-8 leading-[0.9] animate-slide-up tracking-tighter">
+              Gerencie seu <br />
+              <span className="text-primary">Pet Shop</span> com <br />
+              Excelência
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-slate-200 max-w-xl mb-12 animate-slide-up font-medium leading-relaxed" style={{ animationDelay: '100ms' }}>
+              A solução completa de agendamento e gestão para pet shops modernos. 
+              Automatize sua agenda e foque no que importa: o cuidado com os pets.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row items-center gap-6 animate-slide-up" style={{ animationDelay: '200ms' }}>
+              <Link to="/login">
+                <Button size="lg" className="h-16 px-10 text-xl font-black gap-3 group shadow-2xl shadow-primary/40 bg-primary hover:bg-primary/90">
+                  Começar agora
+                  <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+              <Button size="lg" variant="outline" className="h-16 px-10 text-xl font-bold bg-white/5 border-white/20 text-white hover:bg-white/10 backdrop-blur-sm">
+                Ver demonstração
               </Button>
-            </Link>
-            <Button size="lg" variant="outline" className="h-14 px-8 text-lg font-medium">
-              Ver demonstração
-            </Button>
-          </div>
-
-          {/* Social Proof Placeholder */}
-          <div className="mt-16 pt-10 border-t border-border animate-fade-in">
-            <p className="text-sm font-medium text-muted-foreground mb-6">CONFIADO POR MAIS DE 500+ PET SHOPS PELO BRASIL</p>
-            <div className="flex flex-wrap justify-center gap-12 opacity-30 grayscale contrast-125">
-              <span className="font-black text-2xl">PETLOVE</span>
-              <span className="font-black text-2xl">PETZ</span>
-              <span className="font-black text-2xl">COBASI</span>
-              <span className="font-black text-2xl">DOGHERO</span>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Grid */}
-      <section className="py-24 bg-card/30">
+      <section className="py-32 bg-slate-50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Tudo sob seu controle</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">Funcionalidades pensadas no dia a dia do seu negócio pet.</p>
+          <div className="text-center mb-24">
+            <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">Tudo sob seu controle</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-medium">Funcionalidades inteligentes pensadas na produtividade do seu negócio pet em 2026.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             <FeatureCard 
-              icon={<Calendar className="w-6 h-6" />}
+              icon={<Calendar className="w-7 h-7" />}
               title="Agenda 24h"
-              description="Seus clientes agendam serviços a qualquer hora, reduzindo seu trabalho manual."
+              description="Seus clientes agendam serviços a qualquer hora, reduzindo seu trabalho manual e aumentando as vendas."
             />
             <FeatureCard 
-              icon={<Users className="w-6 h-6" />}
+              icon={<Users className="w-7 h-7" />}
               title="Gestão de Equipe"
-              description="Controle os horários e especialidades de cada profissional do seu pet shop."
+              description="Controle os horários, pausas e especialidades de cada profissional do seu pet shop de forma visual."
             />
             <FeatureCard 
-              icon={<Scissors className="w-6 h-6" />}
-              title="Serviços Customizados"
-              description="Defina preços e durações personalizadas para banho, tosa, veterinário e mais."
+              icon={<Scissors className="w-7 h-7" />}
+              title="Serviços Profissionais"
+              description="Defina preços, durações e ícones personalizados para cada tipo de cuidado que você oferece."
             />
             <FeatureCard 
-              icon={<Clock className="w-6 h-6" />}
-              title="Sem Conflitos"
-              description="Sistema inteligente que impede agendamentos em horários já ocupados."
+              icon={<Clock className="w-7 h-7" />}
+              title="Disponibilidade Real"
+              description="Sistema que impede conflitos, garantindo que cada profissional atenda apenas no seu horário disponível."
             />
             <FeatureCard 
-              icon={<Settings className="w-6 h-6" />}
-              title="Painel Completo"
-              description="Gestão visual intuitiva para gerenciar status de agendamentos e cadastros."
+              icon={<Settings className="w-7 h-7" />}
+              title="Configuração Total"
+              description="Personalize cores, logos e regras de agendamento para deixar a plataforma com a cara do seu negócio."
             />
             <FeatureCard 
-              icon={<ShieldCheck className="w-6 h-6" />}
-              title="Segurança SaaS"
-              description="Dados isolados e protegidos com tecnologia Cloud de última geração."
+              icon={<ShieldCheck className="w-7 h-7" />}
+              title="Tecnologia 2026"
+              description="Dados protegidos com criptografia de ponta a ponta e alta disponibilidade em nuvem."
             />
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-border">
-        <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <PawPrint className="text-primary w-5 h-5" />
-            <span className="font-bold">BookingBuddy</span>
+      <footer className="py-16 bg-slate-900 text-white border-t border-white/5">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-10 mb-12">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+                <PawPrint className="text-white w-6 h-6" />
+              </div>
+              <span className="font-bold text-2xl tracking-tighter">BookingBuddy</span>
+            </div>
+            <div className="flex gap-8 text-slate-400 font-medium">
+              <a href="#" className="hover:text-white transition-colors">Privacidade</a>
+              <a href="#" className="hover:text-white transition-colors">Termos</a>
+              <a href="#" className="hover:text-white transition-colors">Suporte</a>
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground italic">
-            "Facilitando a vida dos tutores e pet shops"
-          </p>
-          <p className="text-sm text-muted-foreground">
-            © 2025 BookingBuddy. Todos os direitos reservados.
-          </p>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-12 border-t border-white/5 text-slate-500 text-sm">
+            <p className="italic">"A melhor experiência de agendamento para o mercado Pet."</p>
+            <p className="font-medium">
+              © 2026 BookingBuddy. Todos os direitos reservados.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
