@@ -21,7 +21,7 @@ const Index = () => {
             <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
               <PawPrint className="text-white w-7 h-7" />
             </div>
-            <span className="font-bold text-2xl tracking-tighter">BookingBuddy</span>
+            <span className="font-bold text-2xl tracking-tighter">AgendaPetGo</span>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/login">
@@ -54,70 +54,74 @@ const Index = () => {
             </div>
             
             <h1 className="text-6xl md:text-8xl font-black text-white mb-8 leading-[0.9] animate-slide-up tracking-tighter">
-              Gerencie seu <br />
-              <span className="text-primary">Pet Shop</span> com <br />
-              Excelência
+              A Sua <br />
+              <span className="text-primary">Agenda Digital</span> <br />
+              Inteligente
             </h1>
             
             <p className="text-xl md:text-2xl text-slate-200 max-w-xl mb-12 animate-slide-up font-medium leading-relaxed" style={{ animationDelay: '100ms' }}>
-              A solução completa de agendamento e gestão para pet shops modernos. 
-              Automatize sua agenda e foque no que importa: o cuidado com os pets.
+              Reduza o WhatsApp manual e automatize seu Pet Shop em minutos. 
+              Dê ao seu cliente a facilidade de agendar online 24/7.
             </p>
             
             <div className="flex flex-col sm:flex-row items-center gap-6 animate-slide-up" style={{ animationDelay: '200ms' }}>
               <Link to="/login">
                 <Button size="lg" className="h-16 px-10 text-xl font-black gap-3 group shadow-2xl shadow-primary/40 bg-primary hover:bg-primary/90">
-                  Começar agora
+                  Começar 14 dias grátis
                   <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
               <Button size="lg" variant="outline" className="h-16 px-10 text-xl font-bold bg-white/5 border-white/20 text-white hover:bg-white/10 backdrop-blur-sm">
-                Ver demonstração
+                Conhecer o Plano
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section className="py-32 bg-slate-50">
+      {/* Pricing Section */}
+      <section className="py-32 bg-slate-50 relative overflow-hidden">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-24">
-            <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">Tudo sob seu controle</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-medium">Funcionalidades inteligentes pensadas na produtividade do seu negócio pet em 2026.</p>
+          <div className="text-center mb-16 px-4">
+            <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">O Plano Perfeito para Você</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-medium">Tudo o que seu Pet Shop precisa em um único lugar.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            <FeatureCard 
-              icon={<Calendar className="w-7 h-7" />}
-              title="Agenda 24h"
-              description="Seus clientes agendam serviços a qualquer hora, reduzindo seu trabalho manual e aumentando as vendas."
-            />
-            <FeatureCard 
-              icon={<Users className="w-7 h-7" />}
-              title="Gestão de Equipe"
-              description="Controle os horários, pausas e especialidades de cada profissional do seu pet shop de forma visual."
-            />
-            <FeatureCard 
-              icon={<Scissors className="w-7 h-7" />}
-              title="Serviços Profissionais"
-              description="Defina preços, durações e ícones personalizados para cada tipo de cuidado que você oferece."
-            />
-            <FeatureCard 
-              icon={<Clock className="w-7 h-7" />}
-              title="Disponibilidade Real"
-              description="Sistema que impede conflitos, garantindo que cada profissional atenda apenas no seu horário disponível."
-            />
-            <FeatureCard 
-              icon={<Settings className="w-7 h-7" />}
-              title="Configuração Total"
-              description="Personalize cores, logos e regras de agendamento para deixar a plataforma com a cara do seu negócio."
-            />
-            <FeatureCard 
-              icon={<ShieldCheck className="w-7 h-7" />}
-              title="Tecnologia 2026"
-              description="Dados protegidos com criptografia de ponta a ponta e alta disponibilidade em nuvem."
-            />
+          <div className="max-w-xl mx-auto">
+            <div className="relative p-8 md:p-12 bg-white rounded-[2.5rem] shadow-2xl border-2 border-primary/20 hover:border-primary/50 transition-all duration-500 hover:scale-[1.02]">
+              <div className="absolute top-0 right-12 transform -translate-y-1/2 bg-primary text-white px-6 py-2 rounded-full font-black text-sm uppercase tracking-widest shadow-xl">
+                🔥 Mais Popular
+              </div>
+
+              <div className="mb-8">
+                <h3 className="text-3xl font-black mb-2 italic">PetAgendaHub</h3>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-5xl font-black text-primary">R$29,90</span>
+                  <span className="text-slate-500 font-bold">/mês</span>
+                </div>
+                <p className="text-primary font-bold mt-2">14 dias grátis para testar</p>
+              </div>
+
+              <div className="space-y-4 mb-10">
+                <PricingItem text="Site profissional customizado com seu logo" />
+                <PricingItem text="Agendamento online 24/7 (sem WhatsApp manual)" />
+                <PricingItem text="Confirmações automáticas WhatsApp" />
+                <PricingItem text="Dashboard com todos agendamentos" />
+                <PricingItem text="Suporte WhatsApp ilimitado" />
+              </div>
+
+              <Link to="/login">
+                <Button size="lg" className="w-full h-16 text-xl font-black bg-slate-900 hover:bg-slate-800 text-white rounded-2xl shadow-xl shadow-slate-200">
+                  Assinar Agora
+                </Button>
+              </Link>
+
+              <div className="mt-6 text-center">
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-tighter">
+                  CANCELAR QUALQUER MOMENTO - SEM MULTA
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -130,7 +134,7 @@ const Index = () => {
               <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
                 <PawPrint className="text-white w-6 h-6" />
               </div>
-              <span className="font-bold text-2xl tracking-tighter">BookingBuddy</span>
+              <span className="font-bold text-2xl tracking-tighter">AgendaPetGo</span>
             </div>
             <div className="flex gap-8 text-slate-400 font-medium">
               <a href="#" className="hover:text-white transition-colors">Privacidade</a>
@@ -141,7 +145,7 @@ const Index = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-12 border-t border-white/5 text-slate-500 text-sm">
             <p className="italic">"A melhor experiência de agendamento para o mercado Pet."</p>
             <p className="font-medium">
-              © 2026 BookingBuddy. Todos os direitos reservados.
+              © 2026 AgendaPetGo. Todos os direitos reservados.
             </p>
           </div>
         </div>
@@ -157,6 +161,15 @@ const FeatureCard = ({ icon, title, description }: { icon: any, title: string, d
     </div>
     <h3 className="text-xl font-bold mb-3">{title}</h3>
     <p className="text-muted-foreground leading-relaxed">{description}</p>
+  </div>
+);
+
+const PricingItem = ({ text }: { text: string }) => (
+  <div className="flex items-start gap-3">
+    <div className="mt-1 w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+      <Check className="w-3 h-3 text-emerald-600" />
+    </div>
+    <span className="text-slate-700 font-medium leading-tight">{text}</span>
   </div>
 );
 
