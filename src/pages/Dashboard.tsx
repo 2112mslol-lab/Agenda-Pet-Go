@@ -87,7 +87,6 @@ interface Profile {
   secondary_color: string | null;
   scheduling_rules: any;
   notification_settings: any;
-  payment_settings: any;
   created_at: string;
   updated_at: string;
 }
@@ -136,12 +135,6 @@ const Dashboard = () => {
       new_appointment_alert: true,
       client_reminder_4h: true,
       client_reminder_day_before: true,
-    },
-    payment_settings: {
-      accept_pix: true,
-      pix_key: "",
-      accept_card: true,
-      payment_at_venue: true,
     }
   });
 
@@ -184,7 +177,6 @@ const Dashboard = () => {
             secondary_color: profileBody.secondary_color || "#f59e0b",
             scheduling_rules: profileBody.scheduling_rules || { min_advance_hours: 2, max_days_advance: 30 },
             notification_settings: profileBody.notification_settings || { new_appointment_alert: true, client_reminder_4h: true, client_reminder_day_before: true },
-            payment_settings: profileBody.payment_settings || { accept_pix: true, pix_key: "", accept_card: true, payment_at_venue: true },
          });
          fetchAppointments(session.user.id);
          fetchServices(session.user.id);
@@ -192,8 +184,8 @@ const Dashboard = () => {
     };
 
     const fetchServices = async (id: string) => {
-      const { data } = await supabase.from("services").select("id, name").eq("profile_id", id);
-      if (data) setAvailableServices(data);
+      const { data } = await supabase.from("services").select("id, title").eq("profile_id", id);
+      if (data) setAvailableServices((data as any[]).map(s => ({ id: s.id, name: s.title })));
     };
 
     checkAuth();
@@ -238,7 +230,6 @@ const Dashboard = () => {
           secondary_color: settings.secondary_color,
           scheduling_rules: settings.scheduling_rules,
           notification_settings: settings.notification_settings,
-          payment_settings: settings.payment_settings,
         })
         .eq("id", userId);
 
@@ -311,7 +302,7 @@ const Dashboard = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setAppointments((data as Appointment[]) || []);
+      setAppointments((data as any[]) || []);
     } catch (error) {
       console.error("Error fetching appointments:", error);
       toast.error("Erro ao carregar agendamentos");
@@ -1099,80 +1090,6 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
 
-                <Card className="lg:col-span-2 border-2 border-primary/20">
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Wallet className="w-5 h-5 text-primary" />
-                      Pagamentos dos Clientes (No seu Site)
-                    </CardTitle>
-                    <CardDescription>Configure como seus clientes podem pagar pelo site</CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 border rounded-xl bg-card">
-                        <div className="space-y-0.5">
-                          <Label className="font-bold">Aceitar PIX</Label>
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-tight">Pagamento instantâneo</p>
-                        </div>
-                        <Switch 
-                          checked={settings.payment_settings.accept_pix}
-                          onCheckedChange={(val) => setSettings({
-                            ...settings,
-                            payment_settings: { ...settings.payment_settings, accept_pix: val }
-                          })}
-                        />
-                      </div>
-                      {settings.payment_settings.accept_pix && (
-                        <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
-                          <Label className="text-xs font-bold text-primary italic">Sua Chave PIX</Label>
-                          <Input 
-                            placeholder="CPF, E-mail, Celular ou Chave Aleatória"
-                            value={settings.payment_settings.pix_key}
-                            onChange={(e) => setSettings({
-                              ...settings,
-                              payment_settings: { ...settings.payment_settings, pix_key: e.target.value }
-                            })}
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 border rounded-xl bg-card">
-                        <div className="space-y-0.5">
-                          <Label className="font-bold">Cartão (Online)</Label>
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-tight">Checkout no site</p>
-                        </div>
-                        <Switch 
-                          checked={settings.payment_settings.accept_card}
-                          onCheckedChange={(val) => setSettings({
-                            ...settings,
-                            payment_settings: { ...settings.payment_settings, accept_card: val }
-                          })}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between p-4 border rounded-xl bg-card">
-                        <div className="space-y-0.5">
-                          <Label className="font-bold">Pagar no Local</Label>
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-tight">Direto no balcão</p>
-                        </div>
-                        <Switch 
-                          checked={settings.payment_settings.payment_at_venue}
-                          onCheckedChange={(val) => setSettings({
-                            ...settings,
-                            payment_settings: { ...settings.payment_settings, payment_at_venue: val }
-                          })}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="bg-muted/30 p-4 rounded-b-xl flex justify-end">
-                    <Button onClick={handleUpdateSettings} disabled={isUpdatingSettings} className="gap-2 font-black px-8 h-11 shadow-lg shadow-primary/20">
-                      {isUpdatingSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                      ATUALIZAR CONFIGURAÇÕES
-                    </Button>
-                  </CardFooter>
-                </Card>
               </div>
             </div>
           </TabsContent>
