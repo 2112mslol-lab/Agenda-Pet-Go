@@ -164,11 +164,12 @@ const ProfessionalProfile = () => {
   const primaryHsl = hexToHsl(primaryHex);
 
   return (
-    <div className="min-h-screen gradient-subtle">
+    <div className="min-h-screen" style={{ backgroundColor: `hsla(${primaryHsl}, 0.03)` }}>
        <style>{`
          :root {
            --primary: ${primaryHsl};
            --ring: ${primaryHsl};
+           --background-accent: hsla(${primaryHsl}, 0.05);
          }
          .text-primary { color: hsl(${primaryHsl}); }
          .bg-primary { background-color: hsl(${primaryHsl}); }
@@ -176,9 +177,10 @@ const ProfessionalProfile = () => {
          .bg-primary\\/10 { background-color: hsla(${primaryHsl}, 0.1); }
          .bg-primary\\/20 { background-color: hsla(${primaryHsl}, 0.2); }
          .text-primary-foreground { color: #fff; }
+         .gradient-subtle { background: linear-gradient(to bottom, hsla(${primaryHsl}, 0.05), #ffffff); }
        `}</style>
 
-      <header className="bg-background/80 backdrop-blur-md border-b sticky top-0 z-50">
+      <header className="bg-white/70 backdrop-blur-md border-b sticky top-0 z-50" style={{ borderBottomColor: `hsla(${primaryHsl}, 0.1)` }}>
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               {profile.logo_url ? (
@@ -191,7 +193,7 @@ const ProfessionalProfile = () => {
               <h1 className="font-bold text-lg hidden sm:block">{profile.name}</h1>
             </div>
             <a href="#services">
-                <Button variant="outline" size="sm">Nossos Serviços</Button>
+                <Button variant="outline" size="sm" className="border-primary/20 hover:bg-primary/5">Nossos Serviços</Button>
             </a>
         </div>
       </header>
