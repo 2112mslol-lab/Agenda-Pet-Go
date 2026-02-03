@@ -51,6 +51,24 @@ interface Appointment {
   created_at: string;
   pet_name: string | null;
   pet_species: string | null;
+  payment_method: string | null;
+}
+
+interface Profile {
+  id: string;
+  slug: string;
+  name: string;
+  bio: string | null;
+  avatar_url: string | null;
+  logo_url: string | null;
+  hero_bg_url: string | null;
+  primary_color: string | null;
+  secondary_color: string | null;
+  scheduling_rules: any;
+  notification_settings: any;
+  payment_settings: any;
+  created_at: string;
+  updated_at: string;
 }
 
 const statusConfig = {
@@ -77,7 +95,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [showSetup, setShowSetup] = useState(false);
   const [shopName, setShopName] = useState("");
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
@@ -119,15 +137,16 @@ const Dashboard = () => {
 
       setUserId(session.user.id);
 
-      const { data: profileBody, error } = await supabase
+      const { data: profileData, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", session.user.id)
         .single();
       
-      if (error || !profileBody) {
+      if (error || !profileData) {
          setShowSetup(true);
       } else {
+         const profileBody = profileData as unknown as Profile;
          setProfile(profileBody);
          setSettings({
             logo_url: profileBody.logo_url || "",
