@@ -69,6 +69,9 @@ const Dashboard = () => {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [showSetup, setShowSetup] = useState(false);
+  const [shopName, setShopName] = useState("");
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -88,16 +91,42 @@ const Dashboard = () => {
         .single();
       
       if (error || !profileBody) {
-         toast.warning("Complete seu perfil para receber agendamentos!");
+         setShowSetup(true);
       } else {
          setProfile(profileBody);
+         fetchAppointments(session.user.id);
       }
-
-      fetchAppointments(session.user.id);
     };
 
     checkAuth();
   }, [navigate]);
+
+  const handleCreateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!shopName || !userId) return;
+
+    setIsCreatingProfile(true);
+    const slug = shopName.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+
+    try {
+      const { data, error } = await supabase.from("profiles").insert({
+        id: userId,
+        name: shopName,
+        slug: `${slug}-${Math.floor(Math.random() * 1000)}`, // avoid collisions
+      }).select().single();
+
+      if (error) throw error;
+
+      setProfile(data);
+      setShowSetup(false);
+      toast.success("Pet Shop configurado com sucesso!");
+    } catch (error: any) {
+      toast.error("Erro ao criar perfil. Tente outro nome.");
+      console.error(error);
+    } finally {
+      setIsCreatingProfile(false);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -210,7 +239,40 @@ const Dashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6">
-        <Tabs defaultValue="agendamentos" className="space-y-6">
+        {showSetup ? (
+            <div className="max-w-md mx-auto py-12">
+                <Card className="border-2 border-primary/20 shadow-xl">
+                    <CardHeader className="text-center">
+                        <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <PawPrint className="w-10 h-10 text-primary" />
+                        </div>
+                        <CardTitle className="text-2xl">Configure seu Pet Shop</CardTitle>
+                        <CardDescription>
+                            Dê um nome ao seu estabelecimento para começar a gerenciar sua agenda.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleCreateProfile} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="shopName">Nome do Pet Shop</Label>
+                                <Input 
+                                    id="shopName"
+                                    placeholder="Ex: Pet Shop do Totó" 
+                                    value={shopName}
+                                    onChange={(e) => setShopName(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <Button className="w-full h-12 font-bold" type="submit" disabled={isCreatingProfile}>
+                                {isCreatingProfile ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                                Finalizar Configuração
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
+            </div>
+        ) : (
+          <Tabs defaultValue="agendamentos" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5 lg:w-[800px]">
             <TabsTrigger value="agendamentos" className="gap-2">
               <Calendar className="w-4 h-4" />
@@ -375,6 +437,7 @@ const Dashboard = () => {
              </div>
           </TabsContent>
         </Tabs>
+        )}
       </main>
     </div>
   );
