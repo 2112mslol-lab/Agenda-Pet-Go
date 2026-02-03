@@ -19,6 +19,7 @@ interface TimeSlotPickerProps {
     max_days_advance: number;
     lock_day_before?: boolean;
   };
+  professionalId?: string;
 }
 
 interface BookedSlot {
@@ -49,7 +50,8 @@ export const TimeSlotPicker = ({
   date,
   selectedTime,
   onTimeSelect,
-  schedulingRules = { min_advance_hours: 2, max_days_advance: 30 }
+  schedulingRules = { min_advance_hours: 2, max_days_advance: 30 },
+  professionalId
 }: TimeSlotPickerProps) => {
   const [bookedSlots, setBookedSlots] = useState<BookedSlot[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -69,12 +71,18 @@ export const TimeSlotPicker = ({
         const endOfDay = new Date(date);
         endOfDay.setHours(23, 59, 59, 999);
 
-        const { data, error } = await supabase
+        let query = supabase
           .from("agendamentos")
-          .select("data_hora, nome_cliente, servico, status")
+          .select("data_hora, nome_cliente, servico, status, professional_id")
           .gte("data_hora", startOfDay.toISOString())
           .lte("data_hora", endOfDay.toISOString())
           .in("status", ["pendente", "confirmado"]);
+
+        if (professionalId && professionalId !== "null") {
+          query = query.eq("professional_id", professionalId);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 
@@ -113,7 +121,7 @@ export const TimeSlotPicker = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [date]);
+  }, [date, professionalId]);
 
   const isSlotTooSoon = (slot: string) => {
     if (!date) return false;

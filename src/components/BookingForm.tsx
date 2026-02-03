@@ -340,6 +340,7 @@ export const BookingForm = ({
                     selectedTime={time}
                     onTimeSelect={setTime}
                     schedulingRules={schedulingRules}
+                    professionalId={watch("professionalId")}
                  />
               </div>
             </div>
