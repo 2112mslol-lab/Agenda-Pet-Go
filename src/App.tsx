@@ -8,6 +8,10 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
 import NotFound from "./pages/NotFound";
+import AgendamentoPetShop from "./pages/AgendamentoPetShop";
+import AgendaOnlineBanhoTosa from "./pages/AgendaOnlineBanhoTosa";
+import SistemaParaPetShop from "./pages/SistemaParaPetShop";
+import { SEO } from "./components/SEO";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +26,11 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           
+          {/* SEO Niche Pages */}
+          <Route path="/agendamento-pet-shop" element={<AgendamentoPetShop />} />
+          <Route path="/agenda-online-banho-e-tosa" element={<AgendaOnlineBanhoTosa />} />
+          <Route path="/sistema-para-pet-shop" element={<SistemaParaPetShop />} />
+
           {/* Dynamic Profile Route - Place last to avoid conflicts */}
           <Route path="/:slug" element={<ProfessionalProfile />} />
           
