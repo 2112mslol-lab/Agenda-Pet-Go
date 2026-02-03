@@ -671,38 +671,66 @@ const Dashboard = () => {
                                 {appointment.payment_method === "presencial" && <Wallet className="w-3 h-3 text-primary" />}
                                 <span className="capitalize">{appointment.payment_method || "No Local"}</span>
                               </div>
-                        {!isPending && appointment.status === "confirmado" && (
-                          <div className="flex gap-2 md:flex-col lg:flex-row">
-                             <Button
-                              variant="ghost"
-                              size="sm"
-                              className="gap-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                              onClick={() => sendReminder(appointment)}
-                            >
-                              <Phone className="w-4 h-4" />
-                              Lembrete
-                            </Button>
-                             <Button
-                              onClick={() => updateStatus(appointment.id, "recusado")}
-                              disabled={isUpdating}
-                              variant="outline"
-                              size="sm"
-                              className="gap-2 border-destructive text-destructive hover:bg-destructive/5"
-                            >
-                              <X className="w-4 h-4" />
-                              Cancelar
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="gap-2 text-muted-foreground"
-                              onClick={() => setEditingAppointment(appointment)}
-                            >
-                              <Settings className="w-4 h-4" />
-                              Alterar
-                            </Button>
+                            </div>
                           </div>
-                        )}
+                        </div>
+
+                        <div className="flex gap-2 md:flex-col lg:flex-row">
+                          {isPending && (
+                            <>
+                              <Button
+                                onClick={() => updateStatus(appointment.id, "confirmado")}
+                                disabled={isUpdating}
+                                className="flex-1 md:flex-none gap-2"
+                              >
+                                {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                                Confirmar
+                              </Button>
+                              <Button
+                                onClick={() => updateStatus(appointment.id, "recusado")}
+                                disabled={isUpdating}
+                                variant="outline"
+                                className="flex-1 md:flex-none gap-2 border-destructive text-destructive"
+                              >
+                                {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+                                Recusar
+                              </Button>
+                            </>
+                          )}
+
+                          {!isPending && appointment.status === "confirmado" && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="gap-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                onClick={() => sendReminder(appointment)}
+                              >
+                                <Phone className="w-4 h-4" />
+                                Lembrete
+                              </Button>
+                              <Button
+                                onClick={() => updateStatus(appointment.id, "recusado")}
+                                disabled={isUpdating}
+                                variant="outline"
+                                size="sm"
+                                className="gap-2 border-destructive text-destructive hover:bg-destructive/5"
+                              >
+                                <X className="w-4 h-4" />
+                                Cancelar
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="gap-2 text-muted-foreground"
+                                onClick={() => setEditingAppointment(appointment)}
+                              >
+                                <Settings className="w-4 h-4" />
+                                Alterar
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
