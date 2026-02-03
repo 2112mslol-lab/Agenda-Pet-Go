@@ -16,9 +16,14 @@ interface Profile {
   bio: string | null;
   avatar_url: string | null;
   logo_url: string | null;
-  hero_bg_url: string | null;
   primary_color: string | null;
   secondary_color: string | null;
+  payment_settings?: {
+    accept_pix: boolean;
+    pix_key: string;
+    accept_card: boolean;
+    payment_at_venue: boolean;
+  };
 }
 
 interface Service {
@@ -93,6 +98,7 @@ const ProfessionalProfile = () => {
           hero_bg_url: (profileData as any).hero_bg_url,
           primary_color: (profileData as any).primary_color,
           secondary_color: (profileData as any).secondary_color,
+          payment_settings: (profileData as any).payment_settings,
         };
 
         setProfile(typedProfile);
@@ -200,6 +206,7 @@ const ProfessionalProfile = () => {
             selectedService={selectedService}
             onSuccess={handleBookingSuccess}
             schedulingRules={(profile as any).scheduling_rules}
+            paymentSettings={profile.payment_settings}
           />
         </>
       )}

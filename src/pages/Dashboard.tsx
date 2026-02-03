@@ -19,7 +19,10 @@ import {
   PawPrint,
   Upload,
   Scissors,
-  Image as ImageIcon
+  Image as ImageIcon,
+  CreditCard,
+  Wallet,
+  QrCode
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -93,6 +96,12 @@ const Dashboard = () => {
       new_appointment_alert: true,
       client_reminder_4h: true,
       client_reminder_day_before: true,
+    },
+    payment_settings: {
+      accept_pix: true,
+      pix_key: "",
+      accept_card: true,
+      payment_at_venue: true,
     }
   });
 
@@ -127,6 +136,7 @@ const Dashboard = () => {
             secondary_color: profileBody.secondary_color || "#f59e0b",
             scheduling_rules: profileBody.scheduling_rules || { min_advance_hours: 2, max_days_advance: 30 },
             notification_settings: profileBody.notification_settings || { new_appointment_alert: true, client_reminder_4h: true, client_reminder_day_before: true },
+            payment_settings: profileBody.payment_settings || { accept_pix: true, pix_key: "", accept_card: true, payment_at_venue: true },
          });
          fetchAppointments(session.user.id);
       }
@@ -174,6 +184,7 @@ const Dashboard = () => {
           secondary_color: settings.secondary_color,
           scheduling_rules: settings.scheduling_rules,
           notification_settings: settings.notification_settings,
+          payment_settings: settings.payment_settings,
         })
         .eq("id", userId);
 
@@ -382,6 +393,10 @@ const Dashboard = () => {
               <Clock className="w-4 h-4" />
               <span className="hidden lg:inline">Horários</span>
             </TabsTrigger>
+            <TabsTrigger value="pagamentos" className="gap-2">
+              <Wallet className="w-4 h-4" />
+              <span className="hidden lg:inline">Pagamentos</span>
+            </TabsTrigger>
             <TabsTrigger value="config" className="gap-2">
               <Settings className="w-4 h-4" />
               <span className="hidden lg:inline">Configurações</span>
@@ -470,6 +485,15 @@ const Dashboard = () => {
                                 )}
                               </div>
                             </div>
+                            <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground font-medium uppercase">Pagamento</p>
+                              <div className="flex items-center gap-2 text-foreground font-medium">
+                                {appointment.payment_method === "pix" && <QrCode className="w-3 h-3 text-primary" />}
+                                {appointment.payment_method === "cartao" && <CreditCard className="w-3 h-3 text-primary" />}
+                                {appointment.payment_method === "presencial" && <Wallet className="w-3 h-3 text-primary" />}
+                                <span className="capitalize">{appointment.payment_method || "No Local"}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
 
@@ -512,6 +536,95 @@ const Dashboard = () => {
 
           <TabsContent value="horarios">
             {profile && <BusinessHoursManager profileId={profile.id} />}
+          </TabsContent>
+
+          <TabsContent value="pagamentos">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="border-2 border-primary/10">
+                  <CardHeader>
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-2">
+                      <QrCode className="w-6 h-6 text-primary" />
+                    </div>
+                    <CardTitle>Pagamento via PIX</CardTitle>
+                    <CardDescription>Configure como seus clientes pagarão via PIX</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-4 border rounded-xl">
+                      <div className="space-y-0.5">
+                        <Label>Habilitar PIX</Label>
+                        <p className="text-xs text-muted-foreground">Ofereça PIX como opção no agendamento</p>
+                      </div>
+                      <Switch 
+                        checked={settings.payment_settings.accept_pix}
+                        onCheckedChange={(val) => setSettings({
+                          ...settings,
+                          payment_settings: { ...settings.payment_settings, accept_pix: val }
+                        })}
+                      />
+                    </div>
+                    {settings.payment_settings.accept_pix && (
+                      <div className="space-y-2 animate-fade-in">
+                        <Label>Sua Chave PIX</Label>
+                        <Input 
+                          placeholder="CPF, E-mail, Celular ou Chave Aleatória"
+                          value={settings.payment_settings.pix_key}
+                          onChange={(e) => setSettings({
+                            ...settings,
+                            payment_settings: { ...settings.payment_settings, pix_key: e.target.value }
+                          })}
+                        />
+                        <p className="text-[10px] text-muted-foreground">Esta chave será exibida ao cliente após o agendamento.</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card className="border-2 border-primary/10">
+                  <CardHeader>
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-2">
+                      <CreditCard className="w-6 h-6 text-primary" />
+                    </div>
+                    <CardTitle>Cartão e Presencial</CardTitle>
+                    <CardDescription>Outras formas de recebimento</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-4 border rounded-xl">
+                      <div className="space-y-0.5">
+                        <Label>Aceitar Cartão (Online)</Label>
+                        <p className="text-xs text-muted-foreground">Requer integração com checkout</p>
+                      </div>
+                      <Switch 
+                        checked={settings.payment_settings.accept_card}
+                        onCheckedChange={(val) => setSettings({
+                          ...settings,
+                          payment_settings: { ...settings.payment_settings, accept_card: val }
+                        })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between p-4 border rounded-xl">
+                      <div className="space-y-0.5">
+                        <Label>Pagamento no Local</Label>
+                        <p className="text-xs text-muted-foreground">Cliente paga diretamente no pet shop</p>
+                      </div>
+                      <Switch 
+                        checked={settings.payment_settings.payment_at_venue}
+                        onCheckedChange={(val) => setSettings({
+                          ...settings,
+                          payment_settings: { ...settings.payment_settings, payment_at_venue: val }
+                        })}
+                      />
+                    </div>
+                  </CardContent>
+                  <CardFooter className="bg-muted/30 p-4 rounded-b-xl flex justify-end">
+                    <Button onClick={handleUpdateSettings} disabled={isUpdatingSettings} className="gap-2 font-bold">
+                      {isUpdatingSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                      Salvar Formas de Pagamento
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="config">

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, Loader2, PawPrint, Users } from "lucide-react";
+import { CalendarIcon, Loader2, PawPrint, Users, CreditCard, QrCode, Wallet, Banknote } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -61,6 +61,12 @@ interface BookingFormProps {
     min_advance_hours: number;
     max_days_advance: number;
   };
+  paymentSettings?: {
+    accept_pix: boolean;
+    pix_key: string;
+    accept_card: boolean;
+    payment_at_venue: boolean;
+  };
 }
 
 export const BookingForm = ({ 
@@ -68,10 +74,12 @@ export const BookingForm = ({
   onSuccess, 
   services, 
   profileId,
-  schedulingRules 
+  schedulingRules,
+  paymentSettings 
 }: BookingFormProps) => {
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
 
@@ -144,6 +152,7 @@ export const BookingForm = ({
         profile_id: profileId,
         data_hora: dateTime.toISOString(),
         status: "pendente",
+        payment_method: paymentMethod,
       });
 
       if (error) {
@@ -336,15 +345,82 @@ export const BookingForm = ({
               </div>
             </div>
 
+            {/* Payment Method Step */}
+            {paymentSettings && (
+              <div className="space-y-4 pt-4 border-t border-border">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Wallet className="w-4 h-4 text-primary" />
+                  </div>
+                  <h3 className="font-bold text-lg">Forma de Pagamento</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {paymentSettings.accept_pix && (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("pix")}
+                      className={cn(
+                        "flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all gap-2",
+                        paymentMethod === "pix" 
+                          ? "border-primary bg-primary/5 text-primary" 
+                          : "border-border hover:border-primary/20"
+                      )}
+                    >
+                      <QrCode className="w-6 h-6" />
+                      <span className="text-xs font-bold uppercase">PIX</span>
+                    </button>
+                  )}
+                  {paymentSettings.accept_card && (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("cartao")}
+                      className={cn(
+                        "flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all gap-2",
+                        paymentMethod === "cartao" 
+                          ? "border-primary bg-primary/5 text-primary" 
+                          : "border-border hover:border-primary/20"
+                      )}
+                    >
+                      <CreditCard className="w-6 h-6" />
+                      <span className="text-xs font-bold uppercase">Cartão</span>
+                    </button>
+                  )}
+                  {paymentSettings.payment_at_venue && (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("presencial")}
+                      className={cn(
+                        "flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all gap-2",
+                        paymentMethod === "presencial" 
+                          ? "border-primary bg-primary/5 text-primary" 
+                          : "border-border hover:border-primary/20"
+                      )}
+                    >
+                      <Banknote className="w-6 h-6" />
+                      <span className="text-xs font-bold uppercase">No Local</span>
+                    </button>
+                  )}
+                </div>
+                {paymentMethod === "pix" && paymentSettings.pix_key && (
+                  <div className="p-3 bg-primary/5 border border-primary/20 rounded-xl animate-fade-in">
+                    <p className="text-[10px] text-primary font-bold uppercase mb-1">Pague via PIX na Chave:</p>
+                    <p className="text-sm font-mono font-bold break-all">{paymentSettings.pix_key}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1 italic">* Envie o comprovante via WhatsApp após confirmar.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <Button
               type="submit"
-              className="w-full h-12 text-base font-semibold"
-              disabled={isSubmitting || !selectedService}
+              className="w-full h-14 text-lg font-bold shadow-xl shadow-primary/20 transition-all hover:scale-[1.01]"
+              disabled={isSubmitting || !date || !time || (paymentSettings && !paymentMethod)}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Enviando...
+                  Finalizando...
                 </>
               ) : (
                 "Confirmar Agendamento"
