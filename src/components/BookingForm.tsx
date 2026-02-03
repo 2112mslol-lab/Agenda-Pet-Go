@@ -80,6 +80,8 @@ export const BookingForm = ({
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [internalSelectedService, setInternalSelectedService] = useState(selectedService || "");
+  const [professionalServices, setProfessionalServices] = useState<{professional_id: string, service_id: string}[]>([]);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
 
   const {
@@ -91,33 +93,78 @@ export const BookingForm = ({
   } = useForm<BookingFormData>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
-        petSpecies: "Cachorro"
+        petSpecies: "Cachorro",
+        professionalId: "any"
     }
   });
 
   const petSpecies = watch("petSpecies");
-  const selectedServiceData = services.find((s) => s.id === selectedService);
+  const currentProfessionalId = watch("professionalId");
+  const selectedServiceData = services.find((s) => s.id === (internalSelectedService || selectedService));
+
+  useEffect(() => {
+    if (selectedService) {
+      setInternalSelectedService(selectedService);
+    }
+  }, [selectedService]);
 
   useEffect(() => {
     if (profileId) {
       fetchProfessionals();
+      fetchProfessionalServices();
     }
-  }, [profileId]);
+  }, [profileId, internalSelectedService]);
+
+  const fetchProfessionalServices = async () => {
+    const { data, error } = await supabase
+      .from("professional_services")
+      .select("*");
+    
+    if (!error && data) {
+      setProfessionalServices(data);
+    }
+  };
 
   const fetchProfessionals = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from("professionals")
       .select("id, name")
       .eq("profile_id", profileId)
       .eq("is_active", true);
 
+    const { data, error } = await query;
+
     if (!error && data) {
-      setProfessionals(data);
+      // If a service is selected, filter professionals who can perform it
+      if (internalSelectedService) {
+        const eligibleProIds = professionalServices
+          .filter(ps => ps.service_id === internalSelectedService)
+          .map(ps => ps.professional_id);
+        
+        // If there are links, filter. If no links exist for this service yet, 
+        // we might want to show all or none. Usually we show all if no rules are set,
+        // but since we just added the feature, let's filter only if we have data.
+        if (eligibleProIds.length > 0) {
+          setProfessionals(data.filter(pro => eligibleProIds.includes(pro.id)));
+        } else {
+          setProfessionals(data);
+        }
+      } else {
+        setProfessionals(data);
+      }
     }
   };
 
+  // Re-fetch professionals when service-pro links are loaded
+  useEffect(() => {
+    if (professionalServices.length > 0) {
+      fetchProfessionals();
+    }
+  }, [professionalServices]);
+
   const onSubmit = async (data: BookingFormData) => {
-    if (!selectedService) {
+    const finalServiceId = internalSelectedService || selectedService;
+    if (!finalServiceId) {
       toast.error("Por favor, selecione um serviço");
       return;
     }
@@ -145,8 +192,8 @@ export const BookingForm = ({
         whatsapp: data.whatsapp,
         pet_name: data.petName,
         pet_species: data.petSpecies,
-        professional_id: data.professionalId || null,
-        servico: selectedServiceData?.name || selectedService,
+        professional_id: data.professionalId === "any" ? null : data.professionalId,
+        servico: selectedServiceData?.name || finalServiceId,
         service_id: selectedServiceData?.id,
         profile_id: profileId,
         data_hora: dateTime.toISOString(),
@@ -184,16 +231,26 @@ export const BookingForm = ({
             </p>
           </div>
 
-          {selectedService && selectedServiceData && (
-            <div className="mb-6 p-4 rounded-lg bg-accent border border-primary/20 animate-scale-in">
-              <p className="text-sm text-muted-foreground mb-1">Serviço selecionado:</p>
-              <p className="font-semibold text-foreground">
-                {selectedServiceData.name} - R$ {selectedServiceData.price}
-              </p>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div className="space-y-2">
+              <Label>Selecione o Serviço</Label>
+              <Select 
+                onValueChange={(val) => setInternalSelectedService(val)} 
+                value={internalSelectedService}
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Escolha um serviço" />
+                </SelectTrigger>
+                <SelectContent>
+                  {services.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name} - R$ {s.price}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="nome">Seu Nome</Label>
@@ -285,22 +342,23 @@ export const BookingForm = ({
                 <h3 className="font-bold">Agendamento</h3>
             </div>
 
-            {professionals.length > 0 && (
-                <div className="space-y-2">
-                  <Label>Selecione o Profissional (Opcional)</Label>
-                  <Select onValueChange={(val) => setValue("professionalId", val)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Qualquer profissional" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="null">Qualquer profissional</SelectItem>
-                      {professionals.map((pro) => (
-                        <SelectItem key={pro.id} value={pro.id}>{pro.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-            )}
+            <div className="space-y-2">
+              <Label>Selecione o Profissional (Opcional)</Label>
+              <Select 
+                onValueChange={(val) => setValue("professionalId", val)}
+                value={currentProfessionalId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Qualquer profissional" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Qualquer profissional</SelectItem>
+                  {professionals.map((pro) => (
+                    <SelectItem key={pro.id} value={pro.id}>{pro.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -340,7 +398,7 @@ export const BookingForm = ({
                     selectedTime={time}
                     onTimeSelect={setTime}
                     schedulingRules={schedulingRules}
-                    professionalId={watch("professionalId")}
+                    professionalId={currentProfessionalId === "any" ? undefined : currentProfessionalId}
                  />
               </div>
             </div>
