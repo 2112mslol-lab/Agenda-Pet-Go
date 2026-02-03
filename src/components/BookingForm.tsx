@@ -36,6 +36,7 @@ const bookingSchema = z.object({
     .regex(/^[0-9]+$/, "Apenas números"),
   petName: z.string().min(1, "Nome do pet é obrigatório").max(100),
   petSpecies: z.string().min(1, "Selecione a espécie").max(50),
+  otherSpecies: z.string().max(50).optional(),
   professionalId: z.string().optional(),
 });
 
@@ -203,7 +204,7 @@ export const BookingForm = ({
         email: data.email,
         whatsapp: data.whatsapp.replace(/\D/g, ""),
         pet_name: data.petName,
-        pet_species: data.petSpecies,
+        pet_species: data.petSpecies === "Outro" && data.otherSpecies ? data.otherSpecies : data.petSpecies,
         professional_id: data.professionalId === "any" ? null : data.professionalId,
         servico: selectedServiceData?.name || finalServiceId,
         service_id: selectedServiceData?.id,
@@ -346,6 +347,20 @@ export const BookingForm = ({
                         <p className="text-xs text-destructive font-bold">{errors.petSpecies.message}</p>
                       )}
                     </div>
+
+                    {petSpecies === "Outro" && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <Input
+                          id="otherSpecies"
+                          placeholder="Qual a espécie? (Ex: Coelho)"
+                          {...register("otherSpecies")}
+                          className={cn("h-14 rounded-2xl border-slate-200 bg-white transition-all focus:ring-primary", errors.otherSpecies && "border-destructive")}
+                        />
+                        {errors.otherSpecies && (
+                          <p className="text-xs text-destructive font-bold">{errors.otherSpecies.message}</p>
+                        )}
+                      </div>
+                    )}
                 </div>
             </div>
 
