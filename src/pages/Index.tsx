@@ -7,7 +7,8 @@ import {
   ShieldCheck, 
   ArrowRight,
   Clock,
-  Scissors
+  Scissors,
+  Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -83,42 +84,80 @@ const Index = () => {
       <section className="py-32 bg-slate-50 relative overflow-hidden">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 px-4">
-            <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">O Plano Perfeito para Você</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-medium">Tudo o que seu Pet Shop precisa em um único lugar.</p>
+            <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">Comece a organizar agora</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-medium">O Plano Pet Shop Pro foi criado para quem quer organização sem complicação.</p>
           </div>
 
-          <div className="max-w-xl mx-auto">
-            <div className="relative p-8 md:p-12 bg-white rounded-[2.5rem] shadow-2xl border-2 border-primary/20 hover:border-primary/50 transition-all duration-500 hover:scale-[1.02]">
-              <div className="absolute top-0 right-12 transform -translate-y-1/2 bg-primary text-white px-6 py-2 rounded-full font-black text-sm uppercase tracking-widest shadow-xl">
-                🔥 Mais Popular
+          <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Persuasive Copy */}
+            <div className="space-y-8">
+              <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                <h3 className="text-2xl font-bold mb-4 text-slate-900">Por que escolher o Pro?</h3>
+                <p className="text-slate-600 leading-relaxed mb-6">
+                  Esqueça cadernos, mensagens perdidas no WhatsApp e horários desencontrados. 
+                  Com o <span className="font-bold text-primary">Plano Pet Shop Pro</span>, seus clientes solicitam agendamentos online 24h, enquanto você mantém total controle sobre tudo.
+                </p>
+                <div className="space-y-4">
+                  <div className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-1">
+                      <Check className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <p className="text-slate-600 font-medium">Organização automática da agenda</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-1">
+                      <Check className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <p className="text-slate-600 font-medium">Fim das mensagens perdidas no WhatsApp</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-1">
+                      <Check className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <p className="text-slate-600 font-medium">Mais tempo para cuidar dos pets</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Pricing Card */}
+            <div className="relative p-8 md:p-12 bg-white rounded-[3rem] shadow-2xl border-4 border-primary shadow-primary/20">
+              <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-primary text-white px-8 py-2 rounded-full font-black text-sm uppercase tracking-widest shadow-xl">
+                OFERTA POR TEMPO LIMITADO
               </div>
 
-              <div className="mb-8">
-                <h3 className="text-3xl font-black mb-2 italic">PetAgendaHub</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-black text-primary">R$29,90</span>
-                  <span className="text-slate-500 font-bold">/mês</span>
+              <div className="mb-8 text-center">
+                <h3 className="text-3xl font-black mb-4">🐾 Plano Pet Shop Pro</h3>
+                <div className="flex flex-col items-center">
+                  <span className="text-slate-400 line-through text-xl font-bold">De R$ 39,90</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-6xl font-black text-slate-900">R$ 29,90</span>
+                    <span className="text-slate-500 font-bold text-xl">/mês</span>
+                  </div>
                 </div>
-                <p className="text-primary font-bold mt-2">14 dias grátis para testar</p>
+                <div className="mt-4 bg-emerald-50 text-emerald-700 py-2 px-4 rounded-xl inline-block font-bold animate-pulse">
+                  🎁 14 dias grátis – sem cartão
+                </div>
               </div>
 
               <div className="space-y-4 mb-10">
                 <PricingItem text="Site profissional customizado com seu logo" />
-                <PricingItem text="Agendamento online 24/7 (sem WhatsApp manual)" />
-                <PricingItem text="Confirmações automáticas WhatsApp" />
+                <PricingItem text="Agendamento online 24/7" />
+                <PricingItem text="Sem limite de agendamentos" />
                 <PricingItem text="Dashboard com todos agendamentos" />
                 <PricingItem text="Suporte WhatsApp ilimitado" />
+                <PricingItem text="Sem contrato de fidelidade" />
               </div>
 
               <Link to="/login">
-                <Button size="lg" className="w-full h-16 text-xl font-black bg-slate-900 hover:bg-slate-800 text-white rounded-2xl shadow-xl shadow-slate-200">
-                  Assinar Agora
+                <Button size="lg" className="w-full h-20 text-2xl font-black bg-primary hover:bg-primary/90 text-white rounded-2xl shadow-2xl shadow-primary/30 transform hover:scale-[1.02] transition-all">
+                  QUERO TESTAR GRÁTIS
                 </Button>
               </Link>
 
               <div className="mt-6 text-center">
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-tighter">
-                  CANCELAR QUALQUER MOMENTO - SEM MULTA
+                <p className="text-sm font-black text-slate-400 uppercase tracking-widest">
+                  CANCELAR QUALQUER MOMENTO
                 </p>
               </div>
             </div>
