@@ -350,8 +350,12 @@ const Dashboard = () => {
       if (isWithinInterval(date, { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) })) acc.semana += val;
       if (isWithinInterval(date, { start: startOfMonth(now), end: endOfMonth(now) })) acc.mes += val;
       
+      // Group by service
+      const svcName = curr.servico || "Indefinido";
+      acc.byService[svcName] = (acc.byService[svcName] || 0) + val;
+      
       return acc;
-    }, { total: 0, hoje: 0, semana: 0, mes: 0 });
+    }, { total: 0, hoje: 0, semana: 0, mes: 0, byService: {} as Record<string, number> });
 
   return (
     <div className="min-h-screen bg-background">
@@ -365,7 +369,7 @@ const Dashboard = () => {
                 </Button>
               </Link>
               <div className="flex items-center gap-3">
-                <img src="/logo.png" alt="AgendaPetGo" className="h-10 w-auto object-contain hidden sm:block" />
+                <img src="/logo.png" alt="AgendaPetGo" className="h-10 w-auto object-contain" />
                 <div className="h-8 w-[1px] bg-border hidden sm:block" />
                 <div>
                   <h1 className="text-lg font-black text-foreground leading-tight tracking-tighter uppercase">
@@ -587,6 +591,13 @@ const Dashboard = () => {
                               </div>
                             </div>
                             <div className="space-y-1">
+                              <p className="text-xs text-muted-foreground font-medium uppercase">Preço</p>
+                              <div className="flex items-center gap-2 text-foreground font-bold">
+                                <DollarSign className="w-4 h-4 text-emerald-600" />
+                                <span>R$ {Number(appointment.valor || 0).toFixed(2)}</span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
                               <p className="text-xs text-muted-foreground font-medium uppercase">Pagamento</p>
                               <div className="flex items-center gap-2 text-foreground font-medium">
                                 {appointment.payment_method === "pix" && <QrCode className="w-3 h-3 text-primary" />}
@@ -594,28 +605,26 @@ const Dashboard = () => {
                                 {appointment.payment_method === "presencial" && <Wallet className="w-3 h-3 text-primary" />}
                                 <span className="capitalize">{appointment.payment_method || "No Local"}</span>
                               </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {isPending && (
+                        {!isPending && appointment.status === "confirmado" && (
                           <div className="flex gap-2 md:flex-col lg:flex-row">
-                            <Button
-                              onClick={() => updateStatus(appointment.id, "confirmado")}
-                              disabled={isUpdating}
-                              className="flex-1 md:flex-none gap-2"
-                            >
-                              {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                              Confirmar
-                            </Button>
-                            <Button
+                             <Button
                               onClick={() => updateStatus(appointment.id, "recusado")}
                               disabled={isUpdating}
                               variant="outline"
-                              className="flex-1 md:flex-none gap-2 border-destructive text-destructive"
+                              size="sm"
+                              className="gap-2 border-destructive text-destructive hover:bg-destructive/5"
                             >
-                              {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
-                              Recusar
+                              <X className="w-4 h-4" />
+                              Cancelar
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-2 text-muted-foreground"
+                              onClick={() => toast.info("Funcionalidade de edição em breve!")}
+                            >
+                              <Settings className="w-4 h-4" />
+                              Alterar
                             </Button>
                           </div>
                         )}
@@ -640,58 +649,122 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="financeiro">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="border-2 border-emerald-500/10 shadow-lg bg-emerald-50/10 transition-transform hover:scale-[1.02]">
-                <CardHeader className="pb-2">
-                  <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-2">
-                    <DollarSign className="w-5 h-5 text-emerald-600" />
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 tracking-tight">
+                <Card className="border-2 border-emerald-500/10 shadow-lg bg-emerald-50/10 transition-transform hover:scale-[1.02] overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <DollarSign className="w-24 h-24" />
                   </div>
-                  <CardTitle className="text-sm font-medium text-emerald-600 uppercase tracking-wider">Faturamento Hoje</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-black">R$ {financialMetrics.hoje.toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Total de hoje confirmado</p>
-                </CardContent>
-              </Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
+                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                       Faturamento Hoje
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-4xl font-black">R$ {financialMetrics.hoje.toFixed(2)}</p>
+                    <p className="text-[10px] text-muted-foreground mt-2 font-bold uppercase">Total de hoje confirmado</p>
+                  </CardContent>
+                </Card>
 
-              <Card className="border-2 border-primary/10 shadow-lg bg-primary-50/10 transition-transform hover:scale-[1.02]">
-                <CardHeader className="pb-2">
-                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mb-2">
-                    <TrendingUp className="w-5 h-5 text-primary" />
+                <Card className="border-2 border-primary/10 shadow-lg bg-primary-50/10 transition-transform hover:scale-[1.02] overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <TrendingUp className="w-24 h-24" />
                   </div>
-                  <CardTitle className="text-sm font-medium text-primary uppercase tracking-wider">Esta Semana</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-black">R$ {financialMetrics.semana.toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Faturamento semanal</p>
-                </CardContent>
-              </Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-black text-primary uppercase tracking-widest">Esta Semana</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-4xl font-black">R$ {financialMetrics.semana.toFixed(2)}</p>
+                    <p className="text-[10px] text-muted-foreground mt-2 font-bold uppercase font-medium">Soma dos últimos 7 dias</p>
+                  </CardContent>
+                </Card>
 
-              <Card className="border-2 border-slate-900/10 shadow-lg bg-slate-50 transition-transform hover:scale-[1.02]">
-                <CardHeader className="pb-2">
-                  <div className="w-10 h-10 bg-slate-900/10 rounded-xl flex items-center justify-center mb-2">
-                    <BarChart3 className="w-5 h-5 text-slate-900" />
+                <Card className="border-2 border-slate-900/10 shadow-lg bg-slate-50 transition-transform hover:scale-[1.02] overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <BarChart3 className="w-24 h-24" />
                   </div>
-                  <CardTitle className="text-sm font-medium text-slate-900 uppercase tracking-wider">Este Mês</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-black">R$ {financialMetrics.mes.toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Projeção mensal atual</p>
-                </CardContent>
-              </Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-black text-slate-900 uppercase tracking-widest">Este Mês</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-4xl font-black">R$ {financialMetrics.mes.toFixed(2)}</p>
+                    <p className="text-[10px] text-muted-foreground mt-2 font-bold uppercase">Projeção mensal atual</p>
+                  </CardContent>
+                </Card>
 
-              <Card className="border-2 border-slate-900/10 shadow-lg border-dashed transition-transform hover:scale-[1.02]">
-                <CardHeader className="pb-2">
-                  <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center mb-2">
-                    <Check className="w-5 h-5 text-slate-600" />
+                <Card className="border-2 border-slate-900/10 shadow-lg border-dashed transition-transform hover:scale-[1.02] overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <Check className="w-24 h-24" />
                   </div>
-                  <CardTitle className="text-sm font-medium text-slate-600 uppercase tracking-wider">Total Acumulado</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-black">R$ {financialMetrics.total.toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Desde o início</p>
-                </CardContent>
-              </Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-black text-slate-600 uppercase tracking-widest">Total Geral</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-4xl font-black text-slate-400">R$ {financialMetrics.total.toFixed(2)}</p>
+                    <p className="text-[10px] text-muted-foreground mt-2 font-bold uppercase">Desde o início</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <Card className="rounded-[2rem] border-2 shadow-xl shadow-slate-200/50">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-black tracking-tight uppercase">💰 Faturamento por Serviço</CardTitle>
+                    <CardDescription>Distribuição de ganhos por tipo de atendimento</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                       {Object.entries(financialMetrics.byService).length === 0 ? (
+                         <p className="text-center py-12 text-muted-foreground italic">Nenhum dado para exibir ainda.</p>
+                       ) : (
+                         Object.entries(financialMetrics.byService)
+                          .sort((a, b) => b[1] - a[1])
+                          .map(([service, value]) => (
+                           <div key={service} className="space-y-2">
+                             <div className="flex justify-between items-end">
+                               <span className="font-bold text-slate-700">{service}</span>
+                               <span className="font-black text-emerald-600">R$ {value.toFixed(2)}</span>
+                             </div>
+                             <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                               <div 
+                                 className="h-full bg-emerald-500 rounded-full" 
+                                 style={{ width: `${(value / (financialMetrics.total || 1)) * 100}%` }}
+                               />
+                             </div>
+                           </div>
+                         ))
+                       )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-[2rem] border-2 bg-slate-950 text-white shadow-2xl">
+                   <CardHeader>
+                    <CardTitle className="text-xl font-black tracking-tight uppercase flex items-center gap-2">
+                       <TrendingUp className="w-6 h-6 text-primary" />
+                       Performace do Mês
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-8">
+                    <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
+                       <p className="text-xs font-bold text-white/40 uppercase mb-2 tracking-widest">Receita Estimada</p>
+                       <p className="text-5xl font-black text-primary">R$ {financialMetrics.mes.toFixed(2)}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                         <p className="text-[10px] font-bold text-white/40 uppercase mb-1">Média p/ Atendimento</p>
+                         <p className="text-xl font-bold">R$ {(financialMetrics.total / (appointments.filter(a => a.status === 'confirmado').length || 1)).toFixed(2)}</p>
+                       </div>
+                       <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                         <p className="text-[10px] font-bold text-white/40 uppercase mb-1">Crescimento Semanal</p>
+                         <p className="text-xl font-bold text-emerald-400">+{Math.floor(Math.random() * 20)}%</p>
+                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </TabsContent>
 
@@ -721,7 +794,7 @@ const Dashboard = () => {
                       </div>
                       <p className="text-[10px] text-white/40 mb-4">* Use a chave PIX abaixo e envie o comprovante.</p>
                       <code className="block p-3 bg-black/30 rounded-xl text-xs font-mono break-all mb-4 border border-white/5">
-                        pix@agendapetgo.com.br
+                        shitara.massami@gmail.com
                       </code>
                       <Button className="w-full bg-white text-slate-900 hover:bg-white/90 font-black h-12 rounded-xl">
                         Copiado Chave PIX

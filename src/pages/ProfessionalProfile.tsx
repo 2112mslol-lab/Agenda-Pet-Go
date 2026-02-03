@@ -218,7 +218,7 @@ const ProfessionalProfile = () => {
         <div className="container mx-auto px-4">
             <p className="font-bold text-foreground mb-4">{profile.name}</p>
             <p>© 2025 Todos os direitos reservados.</p>
-            <p className="text-xs mt-4">Plataforma desenvolvida por <span className="font-bold text-primary">Booking Buddy</span></p>
+            <p className="text-xs mt-4">Plataforma desenvolvida por <span className="font-bold text-primary">PetAgendaGo</span></p>
         </div>
       </footer>
     </div>
