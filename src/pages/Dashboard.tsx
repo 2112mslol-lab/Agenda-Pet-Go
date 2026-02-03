@@ -134,6 +134,10 @@ const Dashboard = () => {
   const [isUploadingBg, setIsUploadingBg] = useState(false);
 
   useEffect(() => {
+    document.title = "Painel Gestor | AgendaPetGo";
+  }, []);
+
+  useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       

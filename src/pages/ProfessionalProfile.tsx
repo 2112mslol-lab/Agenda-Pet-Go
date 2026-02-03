@@ -134,6 +134,12 @@ const ProfessionalProfile = () => {
     fetchProfileData();
   }, [slug, navigate]);
 
+  useEffect(() => {
+    if (profile) {
+      document.title = `${profile.name} | Agendamento Online`;
+    }
+  }, [profile]);
+
   const handleBookingSuccess = () => {
     setShowSuccess(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
