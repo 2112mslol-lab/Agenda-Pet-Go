@@ -42,6 +42,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type AppointmentStatus = "pendente" | "confirmado" | "recusado";
 
@@ -132,6 +147,9 @@ const Dashboard = () => {
 
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingBg, setIsUploadingBg] = useState(false);
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [availableServices, setAvailableServices] = useState<{id: string, name: string}[]>([]);
 
   useEffect(() => {
     document.title = "Painel Gestor | AgendaPetGo";
@@ -169,11 +187,17 @@ const Dashboard = () => {
             payment_settings: profileBody.payment_settings || { accept_pix: true, pix_key: "", accept_card: true, payment_at_venue: true },
          });
          fetchAppointments(session.user.id);
+         fetchServices(session.user.id);
       }
     };
 
+    const fetchServices = async (id: string) => {
+      const { data } = await supabase.from("services").select("id, name").eq("profile_id", id);
+      if (data) setAvailableServices(data);
+    };
+
     checkAuth();
-  }, [navigate]);
+  }, [navigate, userId]);
 
   const handleCreateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -321,6 +345,44 @@ const Dashboard = () => {
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  const saveEdit = async () => {
+    if (!editingAppointment) return;
+    setIsSavingEdit(true);
+    try {
+      const { error } = await supabase
+        .from("agendamentos")
+        .update({
+          nome_cliente: editingAppointment.nome_cliente,
+          pet_name: editingAppointment.pet_name,
+          servico: editingAppointment.servico,
+          data_hora: editingAppointment.data_hora,
+          whatsapp: editingAppointment.whatsapp,
+        })
+        .eq("id", editingAppointment.id);
+
+      if (error) throw error;
+      toast.success("Agendamento atualizado!");
+      setEditingAppointment(null);
+      fetchAppointments();
+    } catch (error) {
+      toast.error("Erro ao atualizar agendamento");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const sendReminder = (appointment: Appointment) => {
+    const date = new Date(appointment.data_hora);
+    const dateStr = format(date, "eeee, dd/MM", { locale: ptBR });
+    const timeStr = format(date, "HH:mm");
+    
+    const message = `Olá ${appointment.nome_cliente}! 🐾 Passando para lembrar do seu agendamento de ${appointment.servico} para o pet ${appointment.pet_name || ""} no dia ${dateStr} às ${timeStr}. Te esperamos!`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/55${appointment.whatsapp.replace(/\D/g, '')}?text=${encodedMessage}`;
+    
+    window.open(whatsappUrl, '_blank');
   };
 
   const pendingCount = appointments.filter((a) => a.status === "pendente").length;
@@ -612,6 +674,15 @@ const Dashboard = () => {
                         {!isPending && appointment.status === "confirmado" && (
                           <div className="flex gap-2 md:flex-col lg:flex-row">
                              <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                              onClick={() => sendReminder(appointment)}
+                            >
+                              <Phone className="w-4 h-4" />
+                              Lembrete
+                            </Button>
+                             <Button
                               onClick={() => updateStatus(appointment.id, "recusado")}
                               disabled={isUpdating}
                               variant="outline"
@@ -625,7 +696,7 @@ const Dashboard = () => {
                               variant="ghost"
                               size="sm"
                               className="gap-2 text-muted-foreground"
-                              onClick={() => toast.info("Funcionalidade de edição em breve!")}
+                              onClick={() => setEditingAppointment(appointment)}
                             >
                               <Settings className="w-4 h-4" />
                               Alterar
@@ -1080,6 +1151,74 @@ const Dashboard = () => {
         </Tabs>
         )}
       </main>
+      <Dialog open={!!editingAppointment} onOpenChange={() => setEditingAppointment(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Agendamento</DialogTitle>
+            <DialogDescription>
+              Altere os detalhes do agendamento abaixo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="custName">Nome do Cliente</Label>
+              <Input 
+                id="custName" 
+                value={editingAppointment?.nome_cliente || ""} 
+                onChange={e => setEditingAppointment(prev => prev ? {...prev, nome_cliente: e.target.value} : null)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="custPhone">WhatsApp</Label>
+              <Input 
+                id="custPhone" 
+                value={editingAppointment?.whatsapp || ""} 
+                onChange={e => setEditingAppointment(prev => prev ? {...prev, whatsapp: e.target.value} : null)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="petName">Nome do Pet</Label>
+              <Input 
+                id="petName" 
+                value={editingAppointment?.pet_name || ""} 
+                onChange={e => setEditingAppointment(prev => prev ? {...prev, pet_name: e.target.value} : null)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Serviço</Label>
+              <Select 
+                value={editingAppointment?.servico} 
+                onValueChange={val => setEditingAppointment(prev => prev ? {...prev, servico: val} : null)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o serviço" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableServices.map(s => (
+                    <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="apptDate">Data e Hora</Label>
+              <Input 
+                id="apptDate" 
+                type="datetime-local"
+                value={editingAppointment?.data_hora ? format(new Date(editingAppointment.data_hora), "yyyy-MM-dd'T'HH:mm") : ""}
+                onChange={e => setEditingAppointment(prev => prev ? {...prev, data_hora: new Date(e.target.value).toISOString()} : null)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingAppointment(null)}>Cancelar</Button>
+            <Button onClick={saveEdit} disabled={isSavingEdit}>
+              {isSavingEdit && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Salvar Alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
