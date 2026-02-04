@@ -26,6 +26,10 @@ export type Database = {
           pet_id: string | null
           pet_name: string | null
           pet_species: string | null
+          valor: number | null
+          payment_method: string | null
+          reminder_sent: boolean | null
+          last_notification_at: string | null
         }
         Insert: {
           created_at?: string
@@ -43,6 +47,10 @@ export type Database = {
           pet_id?: string | null
           pet_name?: string | null
           pet_species?: string | null
+          valor?: number | null
+          payment_method?: string | null
+          reminder_sent?: boolean | null
+          last_notification_at?: string | null
         }
         Update: {
           created_at?: string
@@ -60,6 +68,10 @@ export type Database = {
           pet_id?: string | null
           pet_name?: string | null
           pet_species?: string | null
+          valor?: number | null
+          payment_method?: string | null
+          reminder_sent?: boolean | null
+          last_notification_at?: string | null
         }
         Relationships: [
           {
@@ -88,6 +100,36 @@ export type Database = {
             columns: ["pet_id"]
             isOneToOne: false
             referencedRelation: "pets"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      professional_services: {
+        Row: {
+          professional_id: string
+          service_id: string
+        }
+        Insert: {
+          professional_id: string
+          service_id: string
+        }
+        Update: {
+          professional_id?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "professional_services_professional_id_fkey"
+            columns: ["professional_id"]
+            isOneToOne: false
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professional_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           }
         ]
@@ -183,6 +225,16 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           updated_at: string
+          logo_url: string | null
+          hero_bg_url: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          scheduling_rules: Json | null
+          notification_settings: Json | null
+          payment_settings: Json | null
+          subscription_status: string | null
+          subscription_plan: string | null
+          trial_ends_at: string | null
         }
         Insert: {
           id: string
@@ -192,6 +244,16 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           updated_at?: string
+          logo_url?: string | null
+          hero_bg_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          scheduling_rules?: Json | null
+          notification_settings?: Json | null
+          payment_settings?: Json | null
+          subscription_status?: string | null
+          subscription_plan?: string | null
+          trial_ends_at?: string | null
         }
         Update: {
           id?: string
@@ -201,6 +263,16 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           updated_at?: string
+          logo_url?: string | null
+          hero_bg_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          scheduling_rules?: Json | null
+          notification_settings?: Json | null
+          payment_settings?: Json | null
+          subscription_status?: string | null
+          subscription_plan?: string | null
+          trial_ends_at?: string | null
         }
         Relationships: [
           {
@@ -256,6 +328,7 @@ export type Database = {
           duration: number
           price: number
           created_at: string
+          icon_name: string | null
         }
         Insert: {
           id?: string
@@ -265,6 +338,7 @@ export type Database = {
           duration: number
           price: number
           created_at?: string
+          icon_name?: string | null
         }
         Update: {
           id?: string
@@ -274,6 +348,7 @@ export type Database = {
           duration?: number
           price?: number
           created_at?: string
+          icon_name?: string | null
         }
         Relationships: [
           {

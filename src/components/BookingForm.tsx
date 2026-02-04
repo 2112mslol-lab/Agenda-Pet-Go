@@ -211,7 +211,7 @@ export const BookingForm = ({
         profile_id: profileId,
         data_hora: dateTime.toISOString(),
         status: "pendente",
-        valor: selectedServiceData?.price || 0,
+        valor: Number(selectedServiceData?.price || 0),
       });
 
       if (error) {

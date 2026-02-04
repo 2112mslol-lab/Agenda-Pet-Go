@@ -87,7 +87,7 @@ interface Profile {
   secondary_color: string | null;
   scheduling_rules: any;
   notification_settings: any;
-  stripe_customer_id: string | null;
+  payment_settings: any;
   subscription_status: string | null;
   subscription_plan: string | null;
   trial_ends_at: string | null;

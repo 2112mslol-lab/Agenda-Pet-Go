@@ -29,7 +29,7 @@ interface Service {
   description: string | null;
   duration: number;
   price: number;
-  icon_name: string;
+  icon_name: string | null;
 }
 
 const AVAILABLE_ICONS = [
